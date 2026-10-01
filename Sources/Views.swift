@@ -671,7 +671,7 @@ struct SettingsView: View {
             Text(L("Sound: left to macOS")).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
         } else {
             HStack(spacing: 4) {
-                Text(L("Sound")).font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(L("Sound")).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize()
                 Picker("", selection: Binding(get: { store.screens[key]?.soundUID ?? "auto" },
                                               set: { value in store.update(key) { $0.soundUID = value == "auto" ? nil : value } })) {
                     Text(L("Automatic")).tag("auto")
@@ -679,7 +679,7 @@ struct SettingsView: View {
                         Text(c.label(for: output)).tag(output.uid)
                     }
                     if let uid = r?.soundUID, !c.outputs.contains(where: { $0.uid == uid }) {
-                        Text(L("Saved device (not connected)")).tag(uid)
+                        Text(L("Not connected")).tag(uid)
                     }
                 }
                 .labelsHidden()

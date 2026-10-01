@@ -45,6 +45,7 @@
 "No screens remembered yet. Connect a screen, choose what to do and press Return." = "Aucun écran mémorisé. Branchez un écran, choisissez quoi faire et appuyez sur Retour.";
 "No sound devices found." = "Aucun appareil audio trouvé.";
 "Normal monitor, the app stays quiet" = "Écran normal, l’app reste discrète";
+"Not connected" = "Non connecté";
 "Open at Login" = "Ouvrir avec la session";
 "Open Present Perfect at login (recommended)" = "Ouvrir Present Perfect avec la session (recommandé)";
 "Opens the panel at any moment, also when the menu bar icon is hidden." = "Ouvre le panneau à tout moment, même si l’icône de la barre des menus est masquée.";
@@ -69,7 +70,6 @@
 "Same as Mac" = "Comme le Mac";
 "Same picture on both" = "La même image sur les deux";
 "Saved as %@" = "Enregistré sous %@";
-"Saved device (not connected)" = "Appareil enregistré (non connecté)";
 "Screen disconnected" = "Écran déconnecté";
 "Settings" = "Réglages";
 "Settings…" = "Réglages…";

@@ -45,6 +45,7 @@
 "No screens remembered yet. Connect a screen, choose what to do and press Return." = "Nog geen schermen onthouden. Sluit een scherm aan, kies wat je wilt en druk op Return.";
 "No sound devices found." = "Geen geluidsapparaten gevonden.";
 "Normal monitor, the app stays quiet" = "Gewone monitor, de app blijft stil";
+"Not connected" = "Niet verbonden";
 "Open at Login" = "Open bij inloggen";
 "Open Present Perfect at login (recommended)" = "Open Present Perfect bij inloggen (aanbevolen)";
 "Opens the panel at any moment, also when the menu bar icon is hidden." = "Opent het paneel op elk moment, ook als het menubalksymbool verborgen is.";
@@ -69,7 +70,6 @@
 "Same as Mac" = "Zoals de Mac";
 "Same picture on both" = "Op beide hetzelfde beeld";
 "Saved as %@" = "Opgeslagen als %@";
-"Saved device (not connected)" = "Bewaard apparaat (niet verbonden)";
 "Screen disconnected" = "Scherm losgekoppeld";
 "Settings" = "Instellingen";
 "Settings…" = "Instellingen…";
