@@ -10,6 +10,13 @@ struct Note: Equatable {
     var actionTitle: String? = nil
 }
 
+/// One resolution in the "Other…" list.
+struct ModeChoice: Identifiable, Equatable {
+    let id: String     // PictureMode.key
+    let label: String  // in the menu
+    let short: String  // on the button
+}
+
 /// Decides what happens when screens come and go, and holds the panel's state.
 final class Controller: ObservableObject {
     // Panel state
@@ -27,6 +34,13 @@ final class Controller: ObservableObject {
     @Published var playing = false
     @Published var isRemembered = false
     @Published var openAtLogin = false
+    // Resolution of the external screen
+    @Published var picture: Picture = .automatic
+    @Published var otherKey: String?
+    @Published var pictureLabel = ""
+    @Published var otherModes: [ModeChoice] = []
+    @Published var keepCountdown: Int?
+    @Published var pictureMessage: String?
 
     let store: Store
 
@@ -51,6 +65,10 @@ final class Controller: ObservableObject {
     private var awake: IOPMAssertionID = 0
     private var pendingScreens: DispatchWorkItem?
     private var started = false
+    private var originalModes: [CGDirectDisplayID: CGDisplayMode] = [:]   // before the app changed the resolution
+    private var undoModes: [CGDirectDisplayID: CGDisplayMode]?            // while asking "Keep this resolution?"
+    private var undoChoice: (picture: Picture, otherKey: String?) = (.automatic, nil)
+    private var keepTimer: Timer?
 
     init(store: Store = Store()) {
         self.store = store
@@ -98,24 +116,26 @@ final class Controller: ObservableObject {
             disconnected()
         } else {
             refreshTitles()
+            refreshPicture()
             onOverlays()
         }
     }
 
     private func connected(_ added: [DisplayInfo]) {
         let first = added[0]
+        resetPicture(restore: false)
         if let r = store[first.key] {
             deskSession = externals.allSatisfy { store[$0.key]?.choice == .desk }
             guard r.choice != .desk else { return }   // Desk: leave everything to macOS.
             apply(r.choice)
+            let pictureLine = applyRememberedPicture(r, display: first)
             let screenName = displayName(first)
             routeSound(preferredUID: r.soundUID, display: first) { [weak self] output in
                 guard let self else { return }
-                let lines = [
-                    r.choice == .mirror ? L("Mirror: same picture on both screens") : L("Present: %@ is a separate screen", screenName),
-                    output.map { L("Sound on %@", self.label(for: $0)) } ?? L("Sound stays on %@", self.currentOutputLabel),
-                    L("Mac stays awake"),
-                ]
+                var lines = [r.choice == .mirror ? L("Mirror: same picture on both screens") : L("Present: %@ is a separate screen", screenName)]
+                if let pictureLine { lines.append(pictureLine) }
+                lines.append(output.map { L("Sound on %@", self.label(for: $0)) } ?? L("Sound stays on %@", self.currentOutputLabel))
+                lines.append(L("Mac stays awake"))
                 self.onShowNote(Note(title: r.name, lines: lines, actionTitle: L("Change")), { [weak self] in self?.openPanel() })
             }
             return
@@ -130,6 +150,7 @@ final class Controller: ObservableObject {
         deskSession = false
         curtain = false
         allowSleep()
+        resetPicture(restore: false)
         if panelVisible { hidePanel() }
         onOverlays()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
@@ -175,7 +196,9 @@ final class Controller: ObservableObject {
         name = remembered?.name ?? screens.first.map { displayName($0) } ?? ""
         remember = true
         hasScreen = !externals.isEmpty
+        pictureMessage = nil
         refreshTitles()
+        refreshPicture()
     }
 
     private func refreshTitles() {
@@ -202,6 +225,7 @@ final class Controller: ObservableObject {
 
     func hidePanel() {
         guard panelVisible else { return }
+        if keepCountdown != nil { undoPicture() }   // closed without Keep: go back
         panelVisible = false
         onHidePanel()
         onOverlays()
@@ -220,6 +244,7 @@ final class Controller: ObservableObject {
 
     func choose(_ c: Choice) {
         guard hasScreen, !(c == .mirror && !canMirror) else { return }
+        if c != choice { resetPicture(restore: true) }   // macOS arranges the screens with its own resolution
         choice = c
         apply(c)
         if c == .desk {
@@ -262,14 +287,21 @@ final class Controller: ObservableObject {
     }
 
     func done() {
+        if keepCountdown != nil { keepPicture() }
         guard remember, let c = choice, !panelKeys.isEmpty else {
             hidePanel()
             return
         }
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let n = trimmed.isEmpty ? (c == .desk ? L("My desk") : L("External screen")) : trimmed
+        var saved: SavedMode?
+        if picture == .other, let d = pictureDisplay, let key = otherKey {
+            saved = Displays.modes(of: d.id).first { $0.key == key }?.saved
+        }
+        let keptPicture: Picture? = c == .desk || picture == .automatic || (picture == .other && saved == nil) ? nil : picture
         for k in panelKeys {
-            store[k] = Remembered(name: n, choice: c, soundUID: c == .desk ? nil : currentOutputDevice?.uid)
+            store[k] = Remembered(name: n, choice: c, soundUID: c == .desk ? nil : currentOutputDevice?.uid,
+                                  picture: keptPicture, pictureMode: keptPicture == .other ? saved : nil)
         }
         isRemembered = true
         deskSession = c == .desk && externals.allSatisfy { store[$0.key]?.choice == .desk }
@@ -285,6 +317,152 @@ final class Controller: ObservableObject {
         store.forget(externals.map(\.key))
         isRemembered = false
         refreshTitles()
+    }
+
+    // MARK: Resolution
+
+    /// The screen whose resolution the panel changes: the first external screen.
+    private var pictureDisplay: DisplayInfo? {
+        externals.first(where: { panelKeys.contains($0.key) }) ?? externals.first
+    }
+
+    var showsPicture: Bool { hasScreen && (choice == .present || choice == .mirror) }
+
+    func refreshPicture() {
+        guard let d = pictureDisplay else {
+            pictureLabel = ""
+            otherModes = []
+            return
+        }
+        pictureLabel = Displays.currentMode(of: d.id)?.label ?? ""
+        let list = PicturePlan.others(Displays.modes(of: d.id))
+        otherModes = list.map { ModeChoice(id: $0.key, label: PicturePlan.menuLabel($0, in: list), short: $0.size) }
+    }
+
+    /// The mode a choice stands for on this screen, or nil when the screen has none.
+    private func target(_ p: Picture, key: String?, saved: SavedMode?, display d: DisplayInfo) -> PictureMode? {
+        let modes = Displays.modes(of: d.id)
+        switch p {
+        case .automatic:
+            return nil
+        case .larger:
+            let base = originalModes[d.id].map(PictureMode.init) ?? Displays.currentMode(of: d.id)
+            return base.flatMap { PicturePlan.larger(modes, from: $0) }
+        case .safe:
+            return PicturePlan.safe(modes, generic: d.isGeneric)
+        case .other:
+            if let key { return modes.first { $0.key == key } }
+            return saved.flatMap { PicturePlan.matching($0, in: modes) }
+        }
+    }
+
+    /// From the panel. Every change asks "Keep this resolution?" and goes back by itself without an answer.
+    func choosePicture(_ p: Picture, otherKey key: String? = nil) {
+        guard showsPicture, let d = pictureDisplay, p != picture || key != otherKey else { return }
+        let before = Displays.currentModes()
+        if originalModes.isEmpty { originalModes = before }
+        var wanted = originalModes
+        if p != .automatic {
+            guard let mode = target(p, key: key, saved: nil, display: d)?.mode else {
+                pictureMessage = p == .larger ? L("Text is already as large as this screen allows.")
+                                              : L("This screen offers no suitable resolution.")
+                return
+            }
+            wanted = [d.id: mode]
+        }
+        let changes = Displays.changes(to: wanted)
+        pictureMessage = nil
+        guard !changes.isEmpty else {
+            picture = p   // the screen already shows this
+            otherKey = key
+            return
+        }
+        guard Displays.setModes(changes) else {
+            pictureMessage = L("macOS did not accept this resolution.")
+            return
+        }
+        if undoModes == nil {
+            undoModes = before
+            undoChoice = (picture, otherKey)
+        }
+        picture = p
+        otherKey = key
+        lastApplied = Date()
+        startKeepCountdown()
+        refreshPicture()
+    }
+
+    func keepPicture() {
+        stopKeepCountdown()
+        undoModes = nil
+    }
+
+    func undoPicture(timedOut: Bool = false) {
+        stopKeepCountdown()
+        guard let modes = undoModes else { return }
+        undoModes = nil
+        let changes = Displays.changes(to: modes)
+        if !changes.isEmpty {
+            Displays.setModes(changes)
+            lastApplied = Date()
+        }
+        picture = undoChoice.picture
+        otherKey = undoChoice.otherKey
+        pictureMessage = timedOut ? L("No answer, so the previous resolution is back.") : nil
+        refreshPicture()
+    }
+
+    private func startKeepCountdown() {
+        keepTimer?.invalidate()
+        keepCountdown = 15
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self, let n = self.keepCountdown else { return }
+            if n <= 1 { self.undoPicture(timedOut: true) } else { self.keepCountdown = n - 1 }
+        }
+        RunLoop.main.add(timer, forMode: .common)   // keeps counting while a menu is open
+        keepTimer = timer
+    }
+
+    private func stopKeepCountdown() {
+        keepTimer?.invalidate()
+        keepTimer = nil
+        keepCountdown = nil
+    }
+
+    /// Another choice, or a new screen: macOS decides the resolution again.
+    private func resetPicture(restore: Bool) {
+        stopKeepCountdown()
+        undoModes = nil
+        if restore && !originalModes.isEmpty {
+            let changes = Displays.changes(to: originalModes)
+            if !changes.isEmpty { Displays.setModes(changes) }
+        }
+        originalModes = [:]
+        picture = .automatic
+        otherKey = nil
+        pictureMessage = nil
+    }
+
+    /// A remembered screen: set its resolution without asking. Returns the line for the note.
+    private func applyRememberedPicture(_ r: Remembered, display d: DisplayInfo) -> String? {
+        guard let p = r.picture, p != .automatic else { return nil }
+        let before = Displays.currentModes()
+        guard let m = target(p, key: nil, saved: r.pictureMode, display: d),
+              Displays.setModes(Displays.changes(to: [d.id: m.mode])) else {
+            return L("Resolution: not available here, left to macOS")
+        }
+        originalModes = before
+        picture = p
+        otherKey = p == .other ? m.key : nil
+        return L("Resolution: %@", pictureName(p, m))
+    }
+
+    func pictureName(_ p: Picture, _ m: PictureMode) -> String {
+        switch p {
+        case .larger: return L("Larger text") + ", " + m.size
+        case .safe: return L("Safe") + ", " + m.size
+        default: return m.label
+        }
     }
 
     // MARK: Sound

@@ -25,6 +25,7 @@ func renderSnapshots(to dir: URL) {
         c.title = L("New screen connected")
         c.subtitle = "EPSON PJ · " + L("%@ is open", "Keynote")
         c.name = "EPSON PJ"
+        c.pictureLabel = "1920 × 1080 · 60 Hz"
         configure(c)
         return c
     }
@@ -42,6 +43,25 @@ func renderSnapshots(to dir: URL) {
             c.choice = .desk
             c.name = L("My desk")
         }),
+        ("11-resolution-keep", controller { c in
+            c.choice = .present
+            c.currentOutput = 11
+            c.picture = .larger
+            c.pictureLabel = "1920 × 1080 · 30 Hz"
+            c.keepCountdown = 12
+        }),
+        ("12-resolution-safe", controller { c in
+            c.choice = .mirror
+            c.picture = .safe
+        }),
+        ("13-resolution-other", controller { c in
+            c.choice = .present
+            c.picture = .other
+            c.otherModes = [ModeChoice(id: "1280x720/1280x720@60", label: "1280 × 720", short: "1280 × 720")]
+            c.otherKey = "1280x720/1280x720@60"
+            c.pictureLabel = "1280 × 720 · 60 Hz"
+            c.pictureMessage = L("No answer, so the previous resolution is back.")
+        }),
         ("4-no-screen", controller { c in
             c.hasScreen = false
             c.title = L("No screen connected")
@@ -57,7 +77,8 @@ func renderSnapshots(to dir: URL) {
     let notes: [(String, Note, Bool)] = [
         ("5-note-known-room",
          Note(title: L("Room 2.14"),
-              lines: [L("Present: %@ is a separate screen", "EPSON PJ"), L("Sound on %@", "EPSON PJ"), L("Mac stays awake")],
+              lines: [L("Present: %@ is a separate screen", "EPSON PJ"), L("Resolution: %@", L("Safe") + ", 1920 × 1080"),
+                      L("Sound on %@", "EPSON PJ"), L("Mac stays awake")],
               actionTitle: L("Change")), true),
         ("6-note-desk", Note(title: L("%@ remembered", L("My desk")), lines: [L("Present Perfect stays quiet at this screen.")]), false),
         ("7-note-unplugged", Note(title: L("Screen disconnected"), lines: [L("Sound plays on %@", L("This Mac"))]), false),
@@ -71,9 +92,10 @@ func renderSnapshots(to dir: URL) {
     for (suffix, appearance) in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
         render(WelcomeView(openAtLogin: true) { _ in }, appearance: appearance, to: dir.appendingPathComponent("0-welcome-\(suffix).png"))
     }
-    store["1-1-1"] = Remembered(name: L("Room 2.14"), choice: .present, soundUID: "hdmi")
+    store["1-1-1"] = Remembered(name: L("Room 2.14"), choice: .present, soundUID: "hdmi", picture: .safe)
     store["2-2-2"] = Remembered(name: L("My desk"), choice: .desk, soundUID: nil)
-    store["3-3-3"] = Remembered(name: "Aula Max", choice: .mirror, soundUID: "gone")
+    store["3-3-3"] = Remembered(name: "Aula Max", choice: .mirror, soundUID: "gone", picture: .other,
+                                pictureMode: SavedMode(width: 1280, height: 720, pixelWidth: 1280, pixelHeight: 720, refresh: 60))
     let settingsController = controller { $0.connectedKeys = ["2-2-2"] }
     for (suffix, appearance) in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
         render(SettingsView(c: settingsController, store: store, updateAutomatically: .constant(true),

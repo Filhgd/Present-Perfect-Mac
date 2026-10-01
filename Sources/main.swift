@@ -59,6 +59,11 @@ if args.count >= 4, args[1] == "--test-install" {
         exit(1)
     }
 }
+if args.count >= 2, args[1] == "--test-picture" {
+    // Switches the first external screen to another resolution and back (used by the build checks).
+    _ = NSApplication.shared
+    exit(testPictureSwitch())
+}
 if args.count >= 3, args[1] == "--render-ui" {
     renderSnapshots(to: URL(fileURLWithPath: args[2]))
     exit(0)

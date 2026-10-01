@@ -10,6 +10,8 @@ struct Remembered: Codable, Equatable {
     var name: String
     var choice: Choice
     var soundUID: String?
+    var picture: Picture? = nil        // nil: Automatic
+    var pictureMode: SavedMode? = nil  // only for Other
 }
 
 /// Remembered screens, keyed by `DisplayInfo.key`. Kept in the app's preferences.

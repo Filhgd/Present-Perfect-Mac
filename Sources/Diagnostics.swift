@@ -26,6 +26,28 @@ enum Diagnostics {
         }
 
         out.append("")
+        out.append("PICTURE MODES")
+        let externals = Displays.online().filter { !$0.isBuiltin }
+        if externals.isEmpty { out.append("- no external screen") }
+        for d in externals {
+            let modes = Displays.modes(of: d.id)
+            let current = Displays.currentMode(of: d.id)
+            out.append("- id \(d.id): \(modes.count) usable of \(Displays.allModes(of: d.id).count) modes"
+                + (d.isGeneric ? ", no screen information (generic)" : ""))
+            let native = PicturePlan.native(modes)
+            let larger = current.flatMap { PicturePlan.larger(modes, from: $0) }
+            let safe = PicturePlan.safe(modes, generic: d.isGeneric)
+            out.append("  current: " + (current.map(PicturePlan.describe) ?? "unknown"))
+            out.append("  native: " + (native.map(PicturePlan.describe) ?? "unknown"))
+            out.append("  larger text: " + (larger.map(PicturePlan.describe) ?? "none"))
+            out.append("  safe: " + (safe.map(PicturePlan.describe) ?? "none"))
+            let sorted = modes.sorted { a, b in (a.width, a.height, a.pixelWidth, a.refresh) > (b.width, b.height, b.pixelWidth, b.refresh) }
+            for m in sorted {
+                out.append("  - " + PicturePlan.describe(m))
+            }
+        }
+
+        out.append("")
         out.append("SOUND DEVICES")
         let defaultOut = Audio.defaultOutput, defaultIn = Audio.defaultInput
         for dev in Audio.allDevices() {
@@ -54,8 +76,10 @@ enum Diagnostics {
         if let store {
             out.append("")
             out.append("REMEMBERED SCREENS")
-            let lines = store.screens.sorted { $0.key < $1.key }.map { key, r in
-                "- \(key): \(r.name), \(r.choice.rawValue), sound \(r.soundUID ?? "not set")"
+            let lines = store.screens.sorted { $0.key < $1.key }.map { entry -> String in
+                let key = entry.key, r = entry.value
+                let picture = (r.picture ?? .automatic).rawValue + (r.pictureMode.map { " " + $0.label } ?? "")
+                return "- \(key): \(r.name), \(r.choice.rawValue), sound \(r.soundUID ?? "not set"), picture \(picture)"
             }
             out.append(contentsOf: lines.isEmpty ? ["- none"] : lines)
         }

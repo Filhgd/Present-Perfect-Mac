@@ -180,10 +180,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     /// Clicking somewhere else closes the panel, except right after a change of screens
-    /// (macOS may take the focus away while it rearranges the screens).
+    /// (macOS may take the focus away while it rearranges the screens) and while it asks to keep a resolution.
     func windowDidResignKey(_ notification: Notification) {
         guard (notification.object as? NSWindow) === panel, controller.panelVisible else { return }
-        if Date().timeIntervalSince(controller.lastApplied) < 3 {
+        if Date().timeIntervalSince(controller.lastApplied) < 3 || controller.keepCountdown != nil {
             DispatchQueue.main.async { [weak self] in self?.panel?.makeKey() }
             return
         }

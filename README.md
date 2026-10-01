@@ -14,6 +14,15 @@ When you plug in a screen your Mac doesn't know yet, a panel appears in the midd
 In the same panel you choose where the sound plays: the projector or TV, your Mac, or your headphones.
 A **Test** button plays a short sound, so you know it works before the room hears your video.
 
+If the picture isn't right, choose a **Resolution**:
+
+- **Automatic**: what macOS chooses. This is the default.
+- **Larger text**: for a large screen where everything looks tiny.
+- **Safe**: a standard resolution for a projector that flickers, stays black or shows no signal.
+- **Other…**: every resolution the screen offers.
+
+After a change, Present Perfect asks whether to keep it. Without an answer, the previous resolution comes back after 15 seconds.
+
 Press **Return** and the choice is remembered for that screen. The next time you connect it,
 Present Perfect does the same thing by itself and shows a short note with what it did.
 At your own desk it stays completely quiet.
@@ -37,6 +46,7 @@ Requires macOS 14 (Sonoma) or later, on Apple silicon or Intel.
 | Choose where the sound plays           | Click a sound output in the panel (**T** plays a test sound), or pick one under **Sound Output** in the menu bar icon's menu. This works at any time, also without a screen. |
 | Remember the choice for this screen    | Leave **Remember as** on, give it a name and press **Return**.    |
 | Open the panel at any moment           | Press **Control-Option-P** (⌃⌥P), or click the menu bar icon.     |
+| Fix a picture that is too small, flickers or stays black | In Present or Mirror, choose **Larger text** or **Safe** under **Resolution** in the panel, then click **Keep**. |
 | Black out the projector for a moment   | In Present, press **C** in the panel (or click **Curtain**).      |
 | See which screen the audience sees     | While the panel is open in Present, the other screen says so.     |
 | Change or forget a remembered screen   | **Settings…** in the menu bar icon's menu or under **⋯** in the panel lists every remembered screen. |
@@ -55,6 +65,9 @@ While a projector or TV is connected for presenting, your Mac doesn't fall aslee
 - **Welcome.** The first time you open it, a short welcome explains the basics and asks whether
   Present Perfect may open at login (recommended, so it's ready when you plug in). You can change this
   later in the **⋯** menu or the menu bar icon's menu, where **How It Works…** shows the welcome again.
+- **Resolution.** Present Perfect only uses the resolutions that the screen, cable and adapter report to macOS.
+  Some adapters (VGA in particular) can't pass on the projector's details. macOS then offers a general list, and
+  **Safe** picks 1024 × 768 when it's available.
 - **Volume.** Many projectors and TVs don't let your Mac change their volume. Use the screen's own remote.
 - **ClickShare.** If the ClickShare app adds a sound output to your Mac, it appears in the panel's sound choices.
 - **Teams and Zoom.** These apps have their own setting to share your computer's sound when you share
@@ -64,7 +77,7 @@ While a projector or TV is connected for presenting, your Mac doesn't fall aslee
 ## Something not working?
 
 Open the menu bar icon's menu (or **⋯** in the panel) and choose **Copy Diagnostics**. This copies a
-short report of the screens and sound devices your Mac sees. Paste it in an issue on this page.
+short report of the screens, their resolutions and the sound devices your Mac sees. Paste it in an issue on this page.
 
 ## Uninstall
 

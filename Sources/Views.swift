@@ -132,6 +132,68 @@ struct Meter: View {
     }
 }
 
+/// One option in a row of options: sound outputs, resolutions.
+struct Segment: View {
+    let title: String
+    let on: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12.5, weight: on ? .semibold : .regular))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 5)
+                .padding(.horizontal, 4)
+                .foregroundStyle(on ? Color.accentColor : Color.primary)
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(on ? Color.accentColor.opacity(0.15) : Color.clear))
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(on ? Color.accentColor : Color.clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// A plain menu at the mouse pointer, for a button that opens a list.
+enum PopUp {
+    struct Item {
+        let title: String
+        let checked: Bool
+        let action: () -> Void
+    }
+
+    static func show(_ items: [Item], empty: String) {
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        if items.isEmpty {
+            let none = NSMenuItem(title: empty, action: nil, keyEquivalent: "")
+            none.isEnabled = false
+            menu.addItem(none)
+        }
+        for item in items {
+            let handler = MenuHandler(item.action)
+            let menuItem = NSMenuItem(title: item.title, action: #selector(MenuHandler.run), keyEquivalent: "")
+            menuItem.target = handler
+            menuItem.representedObject = handler   // the item keeps its handler alive
+            menuItem.state = item.checked ? .on : .off
+            menu.addItem(menuItem)
+        }
+        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+    }
+}
+
+final class MenuHandler: NSObject {
+    private let action: () -> Void
+
+    init(_ action: @escaping () -> Void) {
+        self.action = action
+    }
+
+    @objc func run() { action() }
+}
+
 // MARK: - Choice tile
 
 struct Tile: View {
@@ -201,6 +263,9 @@ struct PanelView: View {
                 }
                 if c.choice == .desk {
                     NoteBox(text: L("Present Perfect changes nothing here by itself. When you connect a projector or TV, it asks again."))
+                }
+                if c.showsPicture {
+                    resolution
                 }
                 sound
                 footer
@@ -311,21 +376,81 @@ struct PanelView: View {
     }
 
     private func outputButton(_ output: AudioOutput) -> some View {
-        let on = c.currentOutput == output.id
-        return Button { c.selectOutput(output.id) } label: {
-            Text(c.label(for: output))
-                .font(.system(size: 12.5, weight: on ? .semibold : .regular))
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 5)
-                .padding(.horizontal, 4)
-                .foregroundStyle(on ? Color.accentColor : Color.primary)
-                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(on ? Color.accentColor.opacity(0.15) : Color.clear))
-                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(on ? Color.accentColor : Color.clear))
-                .contentShape(Rectangle())
+        Segment(title: c.label(for: output), on: c.currentOutput == output.id) { c.selectOutput(output.id) }
+    }
+
+    private var resolution: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(L("Resolution")).font(.system(size: 12)).foregroundStyle(.secondary)
+                Spacer()
+                Text(c.pictureLabel).font(.system(size: 12)).foregroundStyle(.secondary).monospacedDigit()
+            }
+            HStack(spacing: 0) {
+                Segment(title: L("Automatic"), on: c.picture == .automatic) { c.choosePicture(.automatic) }
+                    .help(L("What macOS chooses"))
+                Segment(title: L("Larger text"), on: c.picture == .larger) { c.choosePicture(.larger) }
+                    .help(L("Bigger text and images, for a large screen"))
+                Segment(title: L("Safe"), on: c.picture == .safe) { c.choosePicture(.safe) }
+                    .help(L("For a screen that flickers, stays black or shows no signal"))
+                Segment(title: otherTitle, on: c.picture == .other, action: showOtherModes)
+                    .help(L("Choose a resolution yourself"))
+            }
+            .padding(2)
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.primary.opacity(0.05)))
+            if let seconds = c.keepCountdown {
+                keepBar(seconds)
+            } else if let hint = pictureHint {
+                Text(hint)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .buttonStyle(.plain)
+    }
+
+    private var otherTitle: String {
+        guard c.picture == .other, let m = c.otherModes.first(where: { $0.id == c.otherKey }) else { return L("Other…") }
+        return m.short
+    }
+
+    private var pictureHint: String? {
+        if let message = c.pictureMessage { return message }
+        switch c.picture {
+        case .larger: return L("Everything on the screen looks bigger.")
+        case .safe: return L("A standard resolution that almost every projector and adapter can show.")
+        default: return nil
+        }
+    }
+
+    private func showOtherModes() {
+        let items = c.otherModes.map { m in
+            PopUp.Item(title: m.label, checked: c.picture == .other && c.otherKey == m.id) { c.choosePicture(.other, otherKey: m.id) }
+        }
+        PopUp.show(items, empty: L("No other resolutions"))
+    }
+
+    /// After a change: the old resolution comes back by itself unless the user keeps the new one.
+    private func keepBar(_ seconds: Int) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(L("Keep this resolution?")).font(.system(size: 12.5, weight: .semibold))
+                Text(L("If you don't answer, the previous resolution comes back."))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 4)
+            Text("\(seconds) s").font(.system(size: 12)).foregroundStyle(.secondary).monospacedDigit().fixedSize()
+            Button(L("Undo")) { c.undoPicture() }
+                .buttonStyle(PillStyle())
+                .fixedSize()
+            Button(L("Keep")) { c.keepPicture() }
+                .buttonStyle(ProminentStyle())
+                .fixedSize()
+        }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.accentColor.opacity(0.12)))
     }
 
     private var footer: some View {
@@ -620,12 +745,12 @@ struct SettingsView: View {
 
     private func row(_ key: String) -> some View {
         let r = store.screens[key]
-        return HStack(spacing: 10) {
-            Image(systemName: r?.choice == .desk ? "display" : r?.choice == .mirror ? "rectangle.on.rectangle" : "play.rectangle")
-                .font(.system(size: 15))
-                .foregroundStyle(Color.accentColor)
-                .frame(width: 24)
-            VStack(alignment: .leading, spacing: 2) {
+        return VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 10) {
+                Image(systemName: r?.choice == .desk ? "display" : r?.choice == .mirror ? "rectangle.on.rectangle" : "play.rectangle")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 24)
                 HStack(spacing: 6) {
                     TextField(L("Name"), text: Binding(get: { store.screens[key]?.name ?? "" },
                                                        set: { value in store.update(key) { $0.name = value } }))
@@ -641,51 +766,84 @@ struct SettingsView: View {
                             .fixedSize()
                     }
                 }
-                soundChoice(key, r)
+                Spacer(minLength: 8)
+                Picker("", selection: Binding(get: { store.screens[key]?.choice ?? .present },
+                                              set: { value in store.update(key) { item in
+                                                  item.choice = value
+                                                  if value == .desk {
+                                                      item.soundUID = nil
+                                                      item.picture = nil
+                                                      item.pictureMode = nil
+                                                  }
+                                              } })) {
+                    Text(L("Present")).tag(Choice.present)
+                    Text(L("Mirror")).tag(Choice.mirror)
+                    Text(L("Desk")).tag(Choice.desk)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+                Button { store.forget([key]) } label: { Image(systemName: "trash") }
+                    .buttonStyle(.borderless)
+                    .help(L("Forget"))
             }
-            Spacer(minLength: 8)
-            Picker("", selection: Binding(get: { store.screens[key]?.choice ?? .present },
-                                          set: { value in store.update(key) { item in
-                                              item.choice = value
-                                              if value == .desk { item.soundUID = nil }
-                                          } })) {
-                Text(L("Present")).tag(Choice.present)
-                Text(L("Mirror")).tag(Choice.mirror)
-                Text(L("Desk")).tag(Choice.desk)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
-            Button { store.forget([key]) } label: { Image(systemName: "trash") }
-                .buttonStyle(.borderless)
-                .help(L("Forget"))
+            details(key, r).padding(.leading, 34)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
     }
 
-    /// Automatic (the screen's own speakers when there are any) or a specific device.
     @ViewBuilder
-    private func soundChoice(_ key: String, _ r: Remembered?) -> some View {
+    private func details(_ key: String, _ r: Remembered?) -> some View {
         if r?.choice == .desk {
-            Text(L("Sound: left to macOS")).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+            Text(L("Sound and resolution: left to macOS")).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
         } else {
-            HStack(spacing: 4) {
-                Text(L("Sound")).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize()
-                Picker("", selection: Binding(get: { store.screens[key]?.soundUID ?? "auto" },
-                                              set: { value in store.update(key) { $0.soundUID = value == "auto" ? nil : value } })) {
-                    Text(L("Automatic")).tag("auto")
-                    ForEach(c.outputs) { output in
-                        Text(c.label(for: output)).tag(output.uid)
-                    }
-                    if let uid = r?.soundUID, !c.outputs.contains(where: { $0.uid == uid }) {
-                        Text(L("Not connected")).tag(uid)
-                    }
-                }
-                .labelsHidden()
-                .controlSize(.small)
-                .fixedSize()
+            HStack(spacing: 16) {
+                soundChoice(key, r)
+                resolutionChoice(key, r)
             }
+        }
+    }
+
+    /// Automatic (the screen's own speakers when there are any) or a specific device.
+    private func soundChoice(_ key: String, _ r: Remembered?) -> some View {
+        HStack(spacing: 4) {
+            Text(L("Sound")).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize()
+            Picker("", selection: Binding(get: { store.screens[key]?.soundUID ?? "auto" },
+                                          set: { value in store.update(key) { $0.soundUID = value == "auto" ? nil : value } })) {
+                Text(L("Automatic")).tag("auto")
+                ForEach(c.outputs) { output in
+                    Text(c.label(for: output)).tag(output.uid)
+                }
+                if let uid = r?.soundUID, !c.outputs.contains(where: { $0.uid == uid }) {
+                    Text(L("Not connected")).tag(uid)
+                }
+            }
+            .labelsHidden()
+            .controlSize(.small)
+            .fixedSize()
+        }
+    }
+
+    /// Automatic, Larger text, Safe, or the resolution chosen under "Other…" in the panel.
+    private func resolutionChoice(_ key: String, _ r: Remembered?) -> some View {
+        HStack(spacing: 4) {
+            Text(L("Resolution")).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize()
+            Picker("", selection: Binding(get: { store.screens[key]?.picture ?? .automatic },
+                                          set: { value in store.update(key) { item in
+                                              item.picture = value == .automatic ? nil : value
+                                              if value != .other { item.pictureMode = nil }
+                                          } })) {
+                Text(L("Automatic")).tag(Picture.automatic)
+                Text(L("Larger text")).tag(Picture.larger)
+                Text(L("Safe")).tag(Picture.safe)
+                if r?.picture == .other, let mode = r?.pictureMode {
+                    Text(mode.label).tag(Picture.other)
+                }
+            }
+            .labelsHidden()
+            .controlSize(.small)
+            .fixedSize()
         }
     }
 }

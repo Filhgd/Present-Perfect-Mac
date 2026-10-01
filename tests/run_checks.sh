@@ -17,6 +17,10 @@ step "diagnostics (what the build machine sees)"
 "$BIN" --diagnostics | tee "$OUT/diagnostics.txt" || bad "diagnostics"
 grep -q "^SCREENS" "$OUT/diagnostics.txt" && grep -q "^SOUND DEVICES" "$OUT/diagnostics.txt" \
   && echo "OK   report has screens and sound devices" || bad "diagnostics incomplete"
+grep -q "^PICTURE MODES" "$OUT/diagnostics.txt" && echo "OK   report has picture modes" || bad "no picture modes in report"
+
+step "picture: switch the resolution and back"
+"$BIN" --test-picture || bad "picture switch"
 
 step "translations inside the app"
 plutil -lint "$APP"/Contents/Resources/*.lproj/Localizable.strings || bad "strings files"
