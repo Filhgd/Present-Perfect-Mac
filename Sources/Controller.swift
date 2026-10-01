@@ -46,6 +46,7 @@ final class Controller: ObservableObject {
     private var panelKeys: [String] = []
     private var lastNames: [String: String] = [:]
     private var outputBeforePanel: AudioDeviceID?
+    private var autoSwitchedTo: AudioDeviceID?   // the output the app chose itself in this panel
     private var deskSession = false
     private var awake: IOPMAssertionID = 0
     private var pendingScreens: DispatchWorkItem?
@@ -193,6 +194,7 @@ final class Controller: ObservableObject {
     private func presentPanel() {
         reloadOutputs()
         outputBeforePanel = currentOutput
+        autoSwitchedTo = nil
         panelVisible = true
         onShowPanel()
         onOverlays()
@@ -221,12 +223,15 @@ final class Controller: ObservableObject {
         choice = c
         apply(c)
         if c == .desk {
-            // Undo a sound change made in this panel: at the desk, macOS decides.
-            if let before = outputBeforePanel, before != currentOutput, outputs.contains(where: { $0.id == before }) {
+            // Undo only the switch the app made itself in this panel; a choice of the user stays.
+            if let auto = autoSwitchedTo, auto == currentOutput, let before = outputBeforePanel,
+               outputs.contains(where: { $0.id == before }) {
                 selectOutput(before)
             }
+            autoSwitchedTo = nil
         } else if let first = externals.first, currentOutputDevice?.isBuiltIn ?? true, let screenOut = screenAudio(for: first) {
             selectOutput(screenOut.id)   // Sound follows the screen.
+            autoSwitchedTo = screenOut.id
         }
         if name.isEmpty || name == L("My desk") || externals.contains(where: { name == self.displayName($0) }) {
             if c == .desk { name = L("My desk") } else if let first = externals.first { name = displayName(first) }

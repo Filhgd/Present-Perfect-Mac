@@ -347,6 +347,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         show.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(show)
         menu.addItem(.separator())
+        controller.reloadOutputs()
+        let header = NSMenuItem(title: L("Sound Output"), action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        menu.addItem(header)
+        for output in controller.outputs {
+            let o = item(controller.label(for: output), #selector(chooseOutput(_:)))
+            o.representedObject = NSNumber(value: output.id)
+            o.state = output.id == controller.currentOutput ? .on : .off
+            o.indentationLevel = 1
+            menu.addItem(o)
+        }
+        menu.addItem(.separator())
         let login = item(L("Open at Login"), #selector(toggleLogin))
         login.state = controller.openAtLogin ? .on : .off
         menu.addItem(login)
@@ -379,6 +391,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     @objc private func howItWorks() { showWelcome() }
     @objc private func checkForUpdates() { updates.check(manual: true) }
     @objc private func openSettings() { showSettings() }
+    @objc private func chooseOutput(_ sender: NSMenuItem) {
+        if let id = (sender.representedObject as? NSNumber)?.uint32Value { controller.selectOutput(id) }
+    }
     @objc private func toggleAutoUpdate() { updates.automatic.toggle() }
     @objc private func quit() { NSApp.terminate(nil) }
 

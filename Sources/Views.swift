@@ -200,10 +200,9 @@ struct PanelView: View {
                     NoteBox(text: L("No projector or TV connected. Plug in a cable to choose how to show your screen."))
                 }
                 if c.choice == .desk {
-                    NoteBox(text: L("Present Perfect leaves this screen and its sound to macOS. When you connect a projector or TV, it asks again."))
-                } else {
-                    sound
+                    NoteBox(text: L("Present Perfect changes nothing here by itself. When you connect a projector or TV, it asks again."))
                 }
+                sound
                 footer
             }
             .padding(14)
@@ -642,7 +641,7 @@ struct SettingsView: View {
                             .fixedSize()
                     }
                 }
-                Text(soundText(r)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                soundChoice(key, r)
             }
             Spacer(minLength: 8)
             Picker("", selection: Binding(get: { store.screens[key]?.choice ?? .present },
@@ -665,11 +664,28 @@ struct SettingsView: View {
         .padding(.vertical, 8)
     }
 
-    private func soundText(_ r: Remembered?) -> String {
-        guard let r else { return "" }
-        if r.choice == .desk { return L("Sound: left to macOS") }
-        guard let uid = r.soundUID else { return L("Sound: chosen automatically") }
-        if let output = c.outputs.first(where: { $0.uid == uid }) { return L("Sound: %@", c.label(for: output)) }
-        return L("Sound: device not connected")
+    /// Automatic (the screen's own speakers when there are any) or a specific device.
+    @ViewBuilder
+    private func soundChoice(_ key: String, _ r: Remembered?) -> some View {
+        if r?.choice == .desk {
+            Text(L("Sound: left to macOS")).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+        } else {
+            HStack(spacing: 4) {
+                Text(L("Sound")).font(.system(size: 11)).foregroundStyle(.secondary)
+                Picker("", selection: Binding(get: { store.screens[key]?.soundUID ?? "auto" },
+                                              set: { value in store.update(key) { $0.soundUID = value == "auto" ? nil : value } })) {
+                    Text(L("Automatic")).tag("auto")
+                    ForEach(c.outputs) { output in
+                        Text(c.label(for: output)).tag(output.uid)
+                    }
+                    if let uid = r?.soundUID, !c.outputs.contains(where: { $0.uid == uid }) {
+                        Text(L("Saved device (not connected)")).tag(uid)
+                    }
+                }
+                .labelsHidden()
+                .controlSize(.small)
+                .fixedSize()
+            }
+        }
     }
 }

@@ -34,7 +34,7 @@ Requires macOS 14 (Sonoma) or later, on Apple silicon or Intel.
 | What you want                          | What to do                                                        |
 |----------------------------------------|-------------------------------------------------------------------|
 | Choose how to use a new screen         | Plug it in. The panel opens. Press **1**, **2** or **3**.         |
-| Choose where the sound plays           | Click a sound output in the panel. **T** plays a test sound.      |
+| Choose where the sound plays           | Click a sound output in the panel (**T** plays a test sound), or pick one under **Sound Output** in the menu bar icon's menu. This works at any time, also without a screen. |
 | Remember the choice for this screen    | Leave **Remember as** on, give it a name and press **Return**.    |
 | Open the panel at any moment           | Press **Control-Option-P** (⌃⌥P), or click the menu bar icon.     |
 | Black out the projector for a moment   | In Present, press **C** in the panel (or click **Curtain**).      |
