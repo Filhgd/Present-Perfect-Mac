@@ -56,7 +56,7 @@ While a projector or TV is connected for presenting, your Mac doesn't fall aslee
 - **ClickShare.** If the ClickShare app adds a sound output to your Mac, it appears in the panel's sound choices.
 - **Teams and Zoom.** These apps have their own setting to share your computer's sound when you share
   your screen ("Include sound" in Teams, "Share sound" in Zoom). Turn it on there when you play a video.
-- **Languages.** English and Dutch, following your Mac's language.
+- **Languages.** English, Dutch and French, following your Mac's language.
 
 ## Something not working?
 

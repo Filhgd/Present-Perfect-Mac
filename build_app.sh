@@ -62,6 +62,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <array>
     <string>en</string>
     <string>nl</string>
+    <string>fr</string>
   </array>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>

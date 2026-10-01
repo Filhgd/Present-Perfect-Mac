@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks that every text shown in the app has a Dutch translation with the same placeholders.
+"""Checks that every text shown in the app is translated, with the same placeholders.
 
 Usage: python3 tests/check_strings.py [--list]
 """
@@ -44,18 +44,20 @@ def main():
         for key in sorted(keys):
             print(key)
         return
-    dutch = entries(ROOT / "Resources/nl.lproj/Localizable.strings")
     problems = []
-    for key, where in sorted(keys.items()):
-        if key not in dutch:
-            problems.append(f"missing Dutch for \"{key}\" ({where})")
-        elif placeholders(key) != placeholders(dutch[key]):
-            problems.append(f"placeholders differ for \"{key}\"")
-    for key in sorted(set(dutch) - set(keys)):
-        problems.append(f"Dutch text no longer used: \"{key}\"")
+    languages = sorted(p.parent.stem for p in (ROOT / "Resources").glob("*.lproj/Localizable.strings") if p.parent.stem != "en")
+    for lang in languages:
+        texts = entries(ROOT / f"Resources/{lang}.lproj/Localizable.strings")
+        for key, where in sorted(keys.items()):
+            if key not in texts:
+                problems.append(f"{lang}: missing translation for \"{key}\" ({where})")
+            elif placeholders(key) != placeholders(texts[key]):
+                problems.append(f"{lang}: placeholders differ for \"{key}\"")
+        for key in sorted(set(texts) - set(keys)):
+            problems.append(f"{lang}: text no longer used: \"{key}\"")
     for p in problems:
         print("FAIL " + p)
-    print(f"{len(keys)} texts, {len(dutch)} Dutch translations, {len(problems)} problems")
+    print(f"{len(keys)} texts, languages checked: {', '.join(languages)}, {len(problems)} problems")
     sys.exit(1 if problems else 0)
 
 
