@@ -9,6 +9,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      screenshots_ref:
+        description: "Also store the screenshots on refs/ci/screenshots (to review the interface)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -80,8 +85,8 @@ jobs:
             tests/out/diagnostics.txt
           if-no-files-found: ignore
 
-      - name: Keep screenshots on a hidden ref for review
-        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+      - name: Store screenshots on refs/ci/screenshots
+        if: github.event_name == 'workflow_dispatch' && inputs.screenshots_ref
         env:
           TOKEN: ${{ github.token }}
         run: |
