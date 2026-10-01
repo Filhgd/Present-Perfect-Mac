@@ -39,7 +39,7 @@ Requires macOS 14 (Sonoma) or later, on Apple silicon or Intel.
 | Open the panel at any moment           | Press **Control-Option-P** (⌃⌥P), or click the menu bar icon.     |
 | Black out the projector for a moment   | In Present, press **C** in the panel (or click **Curtain**).      |
 | See which screen the audience sees     | While the panel is open in Present, the other screen says so.     |
-| Change or forget a remembered screen   | Open the panel while it's connected. Use **⋯ > Forget This Screen** to start over. |
+| Change or forget a remembered screen   | **Settings…** in the menu bar icon's menu or under **⋯** in the panel lists every remembered screen. |
 
 When you unplug, the sound moves off the screen's speakers and a short note tells you where it plays now.
 While a projector or TV is connected for presenting, your Mac doesn't fall asleep.
@@ -59,7 +59,7 @@ While a projector or TV is connected for presenting, your Mac doesn't fall aslee
 - **ClickShare.** If the ClickShare app adds a sound output to your Mac, it appears in the panel's sound choices.
 - **Teams and Zoom.** These apps have their own setting to share your computer's sound when you share
   your screen ("Include sound" in Teams, "Share sound" in Zoom). Turn it on there when you play a video.
-- **Languages.** English, Dutch and French, following your Mac's language.
+- **Languages.** English, Dutch and French. Present Perfect follows your Mac's language, or choose one in **Settings…**.
 
 ## Something not working?
 

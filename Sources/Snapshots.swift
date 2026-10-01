@@ -71,6 +71,15 @@ func renderSnapshots(to dir: URL) {
     for (suffix, appearance) in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
         render(WelcomeView(openAtLogin: true) { _ in }, appearance: appearance, to: dir.appendingPathComponent("0-welcome-\(suffix).png"))
     }
+    store["1-1-1"] = Remembered(name: L("Room 2.14"), choice: .present, soundUID: "hdmi")
+    store["2-2-2"] = Remembered(name: L("My desk"), choice: .desk, soundUID: nil)
+    store["3-3-3"] = Remembered(name: "Aula Max", choice: .mirror, soundUID: "gone")
+    let settingsController = controller { $0.connectedKeys = ["2-2-2"] }
+    for (suffix, appearance) in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
+        render(SettingsView(c: settingsController, store: store, updateAutomatically: .constant(true),
+                            onCheckForUpdates: {}, onRestart: {}),
+               appearance: appearance, to: dir.appendingPathComponent("10-settings-\(suffix).png"))
+    }
     render(AudienceView().frame(width: 960, height: 540), appearance: .darkAqua, to: dir.appendingPathComponent("8-audience-screen.png"))
     render(CurtainView().frame(width: 960, height: 540), appearance: .darkAqua, to: dir.appendingPathComponent("9-curtain.png"))
 }

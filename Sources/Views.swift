@@ -244,6 +244,7 @@ struct PanelView: View {
             Toggle(L("Open at Login"), isOn: Binding(get: { c.openAtLogin }, set: { c.setOpenAtLogin($0) }))
             Divider()
             Button(L("Copy Diagnostics")) { c.copyDiagnostics() }
+            Button(L("Settings…")) { c.showSettings() }
             Button(L("Check for Updates…")) { c.checkForUpdates() }
             Button(L("How It Works…")) { c.showWelcome() }
             Button(L("Buy Me a Coffee…")) { NSWorkspace.shared.open(supportURL) }
@@ -489,5 +490,186 @@ struct WelcomeView: View {
         }
         .padding(24)
         .frame(width: 480)
+    }
+}
+
+// MARK: - Settings
+
+/// The app's own language choice. "system" follows the Mac.
+struct LanguageOption: Identifiable {
+    let id: String     // language code
+    let name: String   // in its own language
+}
+
+enum Languages {
+    static let options = [LanguageOption(id: "en", name: "English"),
+                          LanguageOption(id: "nl", name: "Nederlands"),
+                          LanguageOption(id: "fr", name: "Français")]
+
+    static var current: String {
+        let domain = UserDefaults.standard.persistentDomain(forName: Bundle.main.bundleIdentifier ?? "") ?? [:]
+        guard let first = (domain["AppleLanguages"] as? [String])?.first else { return "system" }
+        let code = String(first.prefix(2))
+        return options.contains(where: { $0.id == code }) ? code : "system"
+    }
+
+    /// Takes effect the next time the app starts.
+    static func set(_ code: String) {
+        if code == "system" {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.set([code], forKey: "AppleLanguages")
+        }
+    }
+}
+
+struct SettingsView: View {
+    @ObservedObject var c: Controller
+    @ObservedObject var store: Store
+    @Binding var updateAutomatically: Bool
+    let onCheckForUpdates: () -> Void
+    let onRestart: () -> Void
+    @State private var language: String
+    @State private var languageChanged = false
+
+    init(c: Controller, store: Store, updateAutomatically: Binding<Bool>,
+         onCheckForUpdates: @escaping () -> Void, onRestart: @escaping () -> Void) {
+        self.c = c
+        self.store = store
+        _updateAutomatically = updateAutomatically
+        self.onCheckForUpdates = onCheckForUpdates
+        self.onRestart = onRestart
+        _language = State(initialValue: Languages.current)
+    }
+
+    private var keys: [String] {
+        store.screens.keys.sorted { (store.screens[$0]?.name ?? "").localizedCaseInsensitiveCompare(store.screens[$1]?.name ?? "") == .orderedAscending }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(L("Remembered screens")).font(.system(size: 13, weight: .semibold))
+            if store.screens.isEmpty {
+                NoteBox(text: L("No screens remembered yet. Connect a screen, choose what to do and press Return."))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(keys, id: \.self) { key in
+                        row(key)
+                        if key != keys.last { Divider().padding(.leading, 44) }
+                    }
+                }
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.04)))
+                Text(L("Changes apply the next time the screen connects."))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(L("General")).font(.system(size: 13, weight: .semibold)).padding(.top, 8)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text(L("Language")).font(.system(size: 12.5))
+                    Spacer()
+                    Picker("", selection: Binding(get: { language }, set: { code in
+                        language = code
+                        Languages.set(code)
+                        languageChanged = true
+                    })) {
+                        Text(L("Same as Mac")).tag("system")
+                        ForEach(Languages.options) { option in
+                            Text(option.name).tag(option.id)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                if languageChanged {
+                    HStack {
+                        Text(L("Restart Present Perfect to use the new language."))
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button(L("Restart Now"), action: onRestart)
+                    }
+                }
+                Toggle(L("Open at Login"), isOn: Binding(get: { c.openAtLogin }, set: { c.setOpenAtLogin($0) }))
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: 12.5))
+                HStack {
+                    Toggle(L("Update Automatically"), isOn: $updateAutomatically)
+                        .toggleStyle(.checkbox)
+                        .font(.system(size: 12.5))
+                    Spacer()
+                    Button(L("Check for Updates…"), action: onCheckForUpdates)
+                }
+            }
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.04)))
+
+            Divider().padding(.top, 4)
+            HStack(spacing: 6) {
+                Text(L("Version %@", Build.versionString)).font(.system(size: 11)).foregroundStyle(.secondary)
+                Spacer()
+                Text(L("Present Perfect is free.")).font(.system(size: 11)).foregroundStyle(.secondary)
+                Button(L("Buy me a coffee")) { NSWorkspace.shared.open(supportURL) }
+                    .buttonStyle(.link)
+                    .font(.system(size: 11))
+            }
+        }
+        .padding(20)
+        .frame(width: 580)
+    }
+
+    private func row(_ key: String) -> some View {
+        let r = store.screens[key]
+        return HStack(spacing: 10) {
+            Image(systemName: r?.choice == .desk ? "display" : r?.choice == .mirror ? "rectangle.on.rectangle" : "play.rectangle")
+                .font(.system(size: 15))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    TextField(L("Name"), text: Binding(get: { store.screens[key]?.name ?? "" },
+                                                       set: { value in store.update(key) { $0.name = value } }))
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13, weight: .semibold))
+                    if c.connectedKeys.contains(key) {
+                        Text(L("Connected"))
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Color.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Capsule().fill(Color.green))
+                            .fixedSize()
+                    }
+                }
+                Text(soundText(r)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            Picker("", selection: Binding(get: { store.screens[key]?.choice ?? .present },
+                                          set: { value in store.update(key) { item in
+                                              item.choice = value
+                                              if value == .desk { item.soundUID = nil }
+                                          } })) {
+                Text(L("Present")).tag(Choice.present)
+                Text(L("Mirror")).tag(Choice.mirror)
+                Text(L("Desk")).tag(Choice.desk)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+            Button { store.forget([key]) } label: { Image(systemName: "trash") }
+                .buttonStyle(.borderless)
+                .help(L("Forget"))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+    }
+
+    private func soundText(_ r: Remembered?) -> String {
+        guard let r else { return "" }
+        if r.choice == .desk { return L("Sound: left to macOS") }
+        guard let uid = r.soundUID else { return L("Sound: chosen automatically") }
+        if let output = c.outputs.first(where: { $0.uid == uid }) { return L("Sound: %@", c.label(for: output)) }
+        return L("Sound: a device that is not connected now")
     }
 }

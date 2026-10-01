@@ -27,7 +27,7 @@ step "screenshots"
 "$BIN" --render-ui "$OUT/screenshots/fr" -AppleLanguages "(fr)" || bad "render French"
 for lang in en nl fr; do
   n=$(ls "$OUT/screenshots/$lang"/*.png 2>/dev/null | wc -l | tr -d ' ')
-  [ "$n" -ge 18 ] && echo "OK   $n screenshots ($lang)" || bad "only $n screenshots ($lang)"
+  [ "$n" -ge 20 ] && echo "OK   $n screenshots ($lang)" || bad "only $n screenshots ($lang)"
 done
 
 step "updates"

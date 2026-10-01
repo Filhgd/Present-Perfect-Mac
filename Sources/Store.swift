@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 enum Choice: String, Codable {
@@ -12,10 +13,10 @@ struct Remembered: Codable, Equatable {
 }
 
 /// Remembered screens, keyed by `DisplayInfo.key`. Kept in the app's preferences.
-final class Store {
+final class Store: ObservableObject {
     private let defaults: UserDefaults
     private let key = "rememberedScreens"
-    private(set) var screens: [String: Remembered] = [:]
+    @Published private(set) var screens: [String: Remembered] = [:]
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -31,6 +32,13 @@ final class Store {
             screens[screenKey] = newValue
             save()
         }
+    }
+
+    /// Changes a remembered screen (Settings).
+    func update(_ screenKey: String, _ change: (inout Remembered) -> Void) {
+        guard var r = screens[screenKey] else { return }
+        change(&r)
+        self[screenKey] = r
     }
 
     func forget(_ keys: [String]) {

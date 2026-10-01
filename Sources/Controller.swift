@@ -37,11 +37,12 @@ final class Controller: ObservableObject {
     var onOverlays: () -> Void = {}
     var onShowWelcome: () -> Void = {}
     var onCheckForUpdates: () -> Void = {}
+    var onShowSettings: () -> Void = {}
 
     private(set) var externals: [DisplayInfo] = []
     private(set) var panelVisible = false
     private(set) var lastApplied = Date.distantPast
-    private var connectedKeys: Set<String> = []
+    @Published var connectedKeys: Set<String> = []
     private var panelKeys: [String] = []
     private var lastNames: [String: String] = [:]
     private var outputBeforePanel: AudioDeviceID?
@@ -385,6 +386,11 @@ final class Controller: ObservableObject {
     func showWelcome() {
         hidePanel()
         onShowWelcome()
+    }
+
+    func showSettings() {
+        hidePanel()
+        onShowSettings()
     }
 
     func checkForUpdates() {

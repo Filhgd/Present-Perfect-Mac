@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var overlays: [CGDirectDisplayID: (window: NSWindow, curtain: Bool)] = [:]
     private var welcomeWindow: NSWindow?
     private let updates = UpdateManager()
+    private var settingsWindow: NSWindow?
     private let welcomeKey = "welcomeShown"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -40,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         }
         controller.onShowWelcome = { [weak self] in self?.showWelcome() }
         controller.onCheckForUpdates = { [weak self] in self?.updates.check(manual: true) }
+        controller.onShowSettings = { [weak self] in self?.showSettings() }
         updates.onNote = { [weak self] note, action in self?.showNote(note, action: action) }
         updates.isPresenting = { [weak self] in self?.controller.isPresenting ?? false }
         updates.start()
@@ -88,13 +90,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func windowWillClose(_ notification: Notification) {
-        guard let w = notification.object as? NSWindow, w === welcomeWindow else { return }
+        guard let w = notification.object as? NSWindow else { return }
+        if w === settingsWindow {
+            settingsWindow = nil
+            return
+        }
+        guard w === welcomeWindow else { return }
         welcomeWindow = nil
         let defaults = UserDefaults.standard
         if !defaults.bool(forKey: welcomeKey) {
             defaults.set(true, forKey: welcomeKey)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.controller.screensChanged() }
         }
+    }
+
+    // MARK: Settings
+
+    private func showSettings() {
+        if let w = settingsWindow {
+            NSApp.activate(ignoringOtherApps: true)
+            w.makeKeyAndOrderFront(nil)
+            return
+        }
+        controller.reloadOutputs()
+        let view = SettingsView(
+            c: controller,
+            store: controller.store,
+            updateAutomatically: Binding(get: { [weak self] in self?.updates.automatic ?? true },
+                                         set: { [weak self] in self?.updates.automatic = $0 }),
+            onCheckForUpdates: { [weak self] in self?.updates.check(manual: true) },
+            onRestart: { Updater.relaunch(Bundle.main.bundleURL) })
+        let host = NSHostingController(rootView: view)
+        host.sizingOptions = [.preferredContentSize]
+        let w = NSWindow(contentViewController: host)
+        w.styleMask = [.titled, .closable]
+        w.title = L("Settings")
+        w.isReleasedWhenClosed = false
+        w.delegate = self
+        w.center()
+        settingsWindow = w
+        NSApp.activate(ignoringOtherApps: true)
+        w.makeKeyAndOrderFront(nil)
     }
 
     /// Opening the app again from Spotlight, Finder or Launchpad shows the panel.
@@ -316,6 +352,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         menu.addItem(login)
         menu.addItem(item(L("Copy Diagnostics"), #selector(copyDiagnostics)))
         menu.addItem(.separator())
+        let settings = item(L("Settings…"), #selector(openSettings))
+        settings.keyEquivalent = ","
+        menu.addItem(settings)
         menu.addItem(item(L("Check for Updates…"), #selector(checkForUpdates)))
         let auto = item(L("Update Automatically"), #selector(toggleAutoUpdate))
         auto.state = updates.automatic ? .on : .off
@@ -339,6 +378,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     @objc private func buyCoffee() { NSWorkspace.shared.open(supportURL) }
     @objc private func howItWorks() { showWelcome() }
     @objc private func checkForUpdates() { updates.check(manual: true) }
+    @objc private func openSettings() { showSettings() }
     @objc private func toggleAutoUpdate() { updates.automatic.toggle() }
     @objc private func quit() { NSApp.terminate(nil) }
 
