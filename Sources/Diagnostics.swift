@@ -54,6 +54,7 @@ enum Diagnostics {
             var flags: [String] = []
             if dev.hasOutput { flags.append("output") }
             if dev.hasInput { flags.append("input") }
+            if dev.isHidden { flags.append("hidden") }
             if dev.id == defaultOut { flags.append("DEFAULT OUTPUT") }
             if dev.id == defaultIn { flags.append("DEFAULT INPUT") }
             out.append("- \(dev.name) [\(Audio.fourCC(dev.transport))] \(flags.joined(separator: ", ")), uid \(dev.uid)")

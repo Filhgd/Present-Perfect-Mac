@@ -468,7 +468,8 @@ final class Controller: ObservableObject {
     // MARK: Sound
 
     func reloadOutputs() {
-        outputs = Audio.outputs().filter { !$0.isVirtual || $0.isClickShare }
+        let all = Audio.outputs()
+        outputs = all.filter { !$0.isVirtual } + all.filter(\.isVirtual)   // software devices last
         currentOutput = Audio.defaultOutput
     }
 
@@ -476,7 +477,7 @@ final class Controller: ObservableObject {
 
     var currentOutputLabel: String { currentOutputDevice.map(label(for:)) ?? L("This Mac") }
 
-    /// Screen and ClickShare first, then the Mac, then the rest. At most four.
+    /// Screen and ClickShare first, then the Mac, then other speakers and headphones, then software devices. At most four.
     var visibleOutputs: [AudioOutput] {
         let screens = outputs.filter { $0.isScreen || $0.isClickShare }
         let mac = outputs.filter { $0.isBuiltIn && !$0.isScreen }

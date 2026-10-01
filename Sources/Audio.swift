@@ -12,7 +12,7 @@ struct AudioOutput: Identifiable, Equatable {
     /// Sound through the screen's cable (HDMI or DisplayPort, also via USB-C).
     var isScreen: Bool { transport == kAudioDeviceTransportTypeHDMI || transport == kAudioDeviceTransportTypeDisplayPort }
     var isClickShare: Bool { name.localizedCaseInsensitiveContains("clickshare") }
-    /// Virtual devices from Teams, Zoom and similar apps: not something you choose to listen on.
+    /// Software devices (BlackHole, Teams, Zoom, Multi-Output): shown after the real speakers.
     var isVirtual: Bool {
         transport == kAudioDeviceTransportTypeVirtual || transport == kAudioDeviceTransportTypeAggregate
             || transport == kAudioDeviceTransportTypeAutoAggregate
@@ -27,6 +27,7 @@ struct AudioDeviceSummary {
     let transport: UInt32
     let hasInput: Bool
     let hasOutput: Bool
+    let isHidden: Bool
 }
 
 enum Audio {
@@ -69,9 +70,15 @@ enum Audio {
         return value
     }
 
+    /// macOS doesn't show hidden devices in its own sound settings.
+    private static func isHidden(_ id: AudioDeviceID) -> Bool {
+        (uint32(id, kAudioDevicePropertyIsHidden) ?? 0) != 0
+    }
+
+    /// The outputs macOS shows in its sound settings.
     static func outputs() -> [AudioOutput] {
         deviceIDs().compactMap { id in
-            guard hasStreams(id, kAudioObjectPropertyScopeOutput),
+            guard hasStreams(id, kAudioObjectPropertyScopeOutput), !isHidden(id),
                   let uid = string(id, kAudioDevicePropertyDeviceUID) else { return nil }
             return AudioOutput(id: id, uid: uid,
                                name: string(id, kAudioObjectPropertyName) ?? uid,
@@ -86,7 +93,8 @@ enum Audio {
                                name: string(id, kAudioObjectPropertyName) ?? "?",
                                transport: uint32(id, kAudioDevicePropertyTransportType) ?? 0,
                                hasInput: hasStreams(id, kAudioObjectPropertyScopeInput),
-                               hasOutput: hasStreams(id, kAudioObjectPropertyScopeOutput))
+                               hasOutput: hasStreams(id, kAudioObjectPropertyScopeOutput),
+                               isHidden: isHidden(id))
         }
     }
 
