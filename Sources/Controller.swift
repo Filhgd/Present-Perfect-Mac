@@ -36,6 +36,7 @@ final class Controller: ObservableObject {
     var onShowNote: (Note, (() -> Void)?) -> Void = { _, _ in }
     var onOverlays: () -> Void = {}
     var onShowWelcome: () -> Void = {}
+    var onCheckForUpdates: () -> Void = {}
 
     private(set) var externals: [DisplayInfo] = []
     private(set) var panelVisible = false
@@ -206,6 +207,10 @@ final class Controller: ObservableObject {
     func togglePanel() {
         panelVisible ? hidePanel() : openPanel()
     }
+
+    /// Updates wait while this is true: the panel is open, the curtain is on,
+    /// or a screen other than your desk is connected.
+    var isPresenting: Bool { panelVisible || curtain || (!externals.isEmpty && !deskSession) }
 
     /// While the panel is open in Present, the other screen says "Audience screen".
     var showsAudienceLabel: Bool { panelVisible && choice == .present && !curtain }
@@ -380,6 +385,11 @@ final class Controller: ObservableObject {
     func showWelcome() {
         hidePanel()
         onShowWelcome()
+    }
+
+    func checkForUpdates() {
+        hidePanel()
+        onCheckForUpdates()
     }
 
     func copyDiagnostics() {

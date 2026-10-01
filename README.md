@@ -48,7 +48,10 @@ While a projector or TV is connected for presenting, your Mac doesn't fall aslee
 
 - **No permissions needed.** Present Perfect uses standard macOS features to arrange screens and
   choose the sound output. It needs no access to your files, camera, microphone or screen.
-- **Nothing leaves your Mac.** The app doesn't connect to the internet.
+- **Updates.** Once a day Present Perfect checks this page for a new version and installs it by itself,
+  but never while you're presenting. It only reads the public release page; nothing about you is sent.
+  Before installing, it checks that the new version is signed by the same developer and notarized by Apple.
+  Use **Check for Updates…** in the menu to check now, or turn off **Update Automatically** there.
 - **Welcome.** The first time you open it, a short welcome explains the basics and asks whether
   Present Perfect may open at login (recommended, so it's ready when you plug in). You can change this
   later in the **⋯** menu or the menu bar icon's menu, where **How It Works…** shows the welcome again.

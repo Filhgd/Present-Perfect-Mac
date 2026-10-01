@@ -244,6 +244,7 @@ struct PanelView: View {
             Toggle(L("Open at Login"), isOn: Binding(get: { c.openAtLogin }, set: { c.setOpenAtLogin($0) }))
             Divider()
             Button(L("Copy Diagnostics")) { c.copyDiagnostics() }
+            Button(L("Check for Updates…")) { c.checkForUpdates() }
             Button(L("How It Works…")) { c.showWelcome() }
             Button(L("Buy Me a Coffee…")) { NSWorkspace.shared.open(supportURL) }
             Divider()

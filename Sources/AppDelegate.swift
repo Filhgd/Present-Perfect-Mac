@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var hotKey: HotKey?
     private var overlays: [CGDirectDisplayID: (window: NSWindow, curtain: Bool)] = [:]
     private var welcomeWindow: NSWindow?
+    private let updates = UpdateManager()
     private let welcomeKey = "welcomeShown"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -38,6 +39,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             self?.controller.togglePanel()
         }
         controller.onShowWelcome = { [weak self] in self?.showWelcome() }
+        controller.onCheckForUpdates = { [weak self] in self?.updates.check(manual: true) }
+        updates.onNote = { [weak self] note, action in self?.showNote(note, action: action) }
+        updates.isPresenting = { [weak self] in self?.controller.isPresenting ?? false }
+        updates.start()
         if UserDefaults.standard.bool(forKey: welcomeKey) {
             controller.start()
         } else {
@@ -311,6 +316,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         menu.addItem(login)
         menu.addItem(item(L("Copy Diagnostics"), #selector(copyDiagnostics)))
         menu.addItem(.separator())
+        menu.addItem(item(L("Check for Updates…"), #selector(checkForUpdates)))
+        let auto = item(L("Update Automatically"), #selector(toggleAutoUpdate))
+        auto.state = updates.automatic ? .on : .off
+        menu.addItem(auto)
+        menu.addItem(.separator())
         menu.addItem(item(L("How It Works…"), #selector(howItWorks)))
         menu.addItem(item(L("Buy Me a Coffee…"), #selector(buyCoffee)))
         menu.addItem(item(L("About Present Perfect"), #selector(about)))
@@ -328,6 +338,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     @objc private func copyDiagnostics() { controller.copyDiagnostics() }
     @objc private func buyCoffee() { NSWorkspace.shared.open(supportURL) }
     @objc private func howItWorks() { showWelcome() }
+    @objc private func checkForUpdates() { updates.check(manual: true) }
+    @objc private func toggleAutoUpdate() { updates.automatic.toggle() }
     @objc private func quit() { NSApp.terminate(nil) }
 
     @objc private func about() {

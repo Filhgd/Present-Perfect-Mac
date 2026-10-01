@@ -30,6 +30,27 @@ for lang in en nl fr; do
   [ "$n" -ge 18 ] && echo "OK   $n screenshots ($lang)" || bad "only $n screenshots ($lang)"
 done
 
+step "updates"
+if codesign -dv "$APP" 2>&1 | grep -q "^TeamIdentifier=[A-Z0-9]\{10\}$"; then
+  T="$OUT/update-test"
+  rm -rf "$T"
+  mkdir -p "$T/target"
+  "$BIN" --verify-app "$APP" && echo "OK   the signed and notarized app is accepted as an update" || bad "own app refused"
+  ditto "$APP" "$T/adhoc.app"
+  codesign --force --deep --sign - "$T/adhoc.app" 2>/dev/null
+  if "$BIN" --verify-app "$T/adhoc.app"; then bad "an ad-hoc signed app was accepted"; else echo "OK   an app without your Developer ID is refused"; fi
+  ditto -c -k --keepParent "$APP" "$T/update.zip"
+  ditto "$APP" "$T/target/Present Perfect.app"
+  plutil -replace CFBundleShortVersionString -string 0.0.1 "$T/target/Present Perfect.app/Contents/Info.plist"
+  "$BIN" --test-install "$T/update.zip" "$T/target/Present Perfect.app" || bad "install from zip"
+  v=$(plutil -extract CFBundleShortVersionString raw "$T/target/Present Perfect.app/Contents/Info.plist")
+  [ "$v" = "$(tr -d '[:space:]' < VERSION)" ] && echo "OK   installed version $v over 0.0.1" || bad "installed version is $v"
+  codesign --verify --deep --strict "$T/target/Present Perfect.app" && echo "OK   installed app is intact" || bad "installed app signature"
+else
+  echo "SKIP the app is not signed with a Developer ID"
+fi
+"$BIN" --check-update && echo "OK   GitHub check works" || bad "update check"
+
 echo
 [ $fail -eq 0 ] && echo "All checks passed." || echo "Some checks failed."
 exit $fail
