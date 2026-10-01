@@ -244,6 +244,7 @@ struct PanelView: View {
             Toggle(L("Open at Login"), isOn: Binding(get: { c.openAtLogin }, set: { c.setOpenAtLogin($0) }))
             Divider()
             Button(L("Copy Diagnostics")) { c.copyDiagnostics() }
+            Button(L("How It Works…")) { c.showWelcome() }
             Button(L("Buy Me a Coffee…")) { NSWorkspace.shared.open(supportURL) }
             Divider()
             Button(L("Quit Present Perfect")) { NSApp.terminate(nil) }
@@ -412,5 +413,80 @@ struct AudienceView: View {
             }
             .foregroundStyle(Color.white)
         }
+    }
+}
+
+// MARK: - Welcome (first launch, and "How It Works…")
+
+struct WelcomeStep: View {
+    let symbol: String
+    let title: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 30, height: 30)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.accentColor.opacity(0.14)))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 13, weight: .semibold))
+                Text(text).font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+struct WelcomeView: View {
+    let onFinish: (Bool) -> Void
+    @State private var openAtLogin: Bool
+
+    init(openAtLogin: Bool, onFinish: @escaping (Bool) -> Void) {
+        self.onFinish = onFinish
+        _openAtLogin = State(initialValue: openAtLogin)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 14) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 64, height: 64)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(L("Welcome to Present Perfect")).font(.system(size: 20, weight: .bold))
+                    Text(L("Connect to a projector or TV and be ready in two key presses."))
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                WelcomeStep(symbol: "cable.connector", title: L("Plug in a screen"),
+                            text: L("A panel appears. Press 1 to present, 2 to mirror, or 3 for a normal monitor at your desk."))
+                WelcomeStep(symbol: "speaker.wave.2", title: L("Choose the sound"),
+                            text: L("Pick the projector or TV, your Mac or your headphones. T plays a test sound."))
+                WelcomeStep(symbol: "checkmark.circle", title: L("Press Return to remember"),
+                            text: L("Next time, that screen is set up by itself. A short note tells you what was done."))
+                WelcomeStep(symbol: "keyboard", title: L("Control-Option-P"),
+                            text: L("Opens the panel at any moment, also when the menu bar icon is hidden."))
+            }
+            Toggle(L("Open Present Perfect at login (recommended)"), isOn: $openAtLogin)
+                .toggleStyle(.checkbox)
+                .font(.system(size: 12.5))
+            Divider()
+            HStack(spacing: 6) {
+                Text(L("Present Perfect is free.")).font(.system(size: 12)).foregroundStyle(.secondary)
+                Button(L("Buy me a coffee")) { NSWorkspace.shared.open(supportURL) }
+                    .buttonStyle(.link)
+                    .font(.system(size: 12))
+                Spacer()
+                Button(L("Get Started")) { onFinish(openAtLogin) }
+                    .buttonStyle(ProminentStyle())
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(24)
+        .frame(width: 480)
     }
 }

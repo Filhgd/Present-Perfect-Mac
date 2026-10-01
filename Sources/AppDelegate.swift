@@ -24,6 +24,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var statusItem: NSStatusItem!
     private var hotKey: HotKey?
     private var overlays: [CGDirectDisplayID: (window: NSWindow, curtain: Bool)] = [:]
+    private var welcomeWindow: NSWindow?
+    private let welcomeKey = "welcomeShown"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         controller.onShowPanel = { [weak self] in self?.showPanel() }
@@ -35,12 +37,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         hotKey = HotKey(keyCode: kVK_ANSI_P, modifiers: controlKey | optionKey, id: 1) { [weak self] in
             self?.controller.togglePanel()
         }
-        let defaults = UserDefaults.standard
-        if !defaults.bool(forKey: "loginItemOffered") {
-            defaults.set(true, forKey: "loginItemOffered")
-            controller.setOpenAtLogin(true)
+        controller.onShowWelcome = { [weak self] in self?.showWelcome() }
+        if UserDefaults.standard.bool(forKey: welcomeKey) {
+            controller.start()
+        } else {
+            // First launch: explain first, then look at the connected screens.
+            controller.start(checkScreensNow: false)
+            showWelcome()
         }
-        controller.start()
+    }
+
+    // MARK: Welcome
+
+    private func showWelcome() {
+        if let w = welcomeWindow {
+            NSApp.activate(ignoringOtherApps: true)
+            w.makeKeyAndOrderFront(nil)
+            return
+        }
+        let firstTime = !UserDefaults.standard.bool(forKey: welcomeKey)
+        let view = WelcomeView(openAtLogin: firstTime || controller.openAtLogin) { [weak self] login in
+            self?.finishWelcome(openAtLogin: login)
+        }
+        let w = NSWindow(contentViewController: NSHostingController(rootView: view))
+        w.styleMask = [.titled, .closable, .fullSizeContentView]
+        w.titlebarAppearsTransparent = true
+        w.titleVisibility = .hidden
+        w.title = appName
+        w.isReleasedWhenClosed = false
+        w.delegate = self
+        if let screen = Displays.homeScreen() {
+            let f = screen.visibleFrame
+            w.setFrameOrigin(NSPoint(x: f.midX - w.frame.width / 2, y: f.midY - w.frame.height / 2 + f.height * 0.05))
+        } else {
+            w.center()
+        }
+        welcomeWindow = w
+        NSApp.activate(ignoringOtherApps: true)
+        w.makeKeyAndOrderFront(nil)
+    }
+
+    private func finishWelcome(openAtLogin: Bool) {
+        if openAtLogin != controller.openAtLogin { controller.setOpenAtLogin(openAtLogin) }
+        welcomeWindow?.close()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard let w = notification.object as? NSWindow, w === welcomeWindow else { return }
+        welcomeWindow = nil
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: welcomeKey) {
+            defaults.set(true, forKey: welcomeKey)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.controller.screensChanged() }
+        }
     }
 
     /// Opening the app again from Spotlight, Finder or Launchpad shows the panel.
@@ -262,6 +311,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         menu.addItem(login)
         menu.addItem(item(L("Copy Diagnostics"), #selector(copyDiagnostics)))
         menu.addItem(.separator())
+        menu.addItem(item(L("How It Works…"), #selector(howItWorks)))
         menu.addItem(item(L("Buy Me a Coffee…"), #selector(buyCoffee)))
         menu.addItem(item(L("About Present Perfect"), #selector(about)))
         menu.addItem(item(L("Quit Present Perfect"), #selector(quit)))
@@ -277,6 +327,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     @objc private func toggleLogin() { controller.setOpenAtLogin(!controller.openAtLogin) }
     @objc private func copyDiagnostics() { controller.copyDiagnostics() }
     @objc private func buyCoffee() { NSWorkspace.shared.open(supportURL) }
+    @objc private func howItWorks() { showWelcome() }
     @objc private func quit() { NSApp.terminate(nil) }
 
     @objc private func about() {

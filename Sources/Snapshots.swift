@@ -68,6 +68,9 @@ func renderSnapshots(to dir: URL) {
                    to: dir.appendingPathComponent("\(name)-\(suffix).png"))
         }
     }
+    for (suffix, appearance) in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
+        render(WelcomeView(openAtLogin: true) { _ in }, appearance: appearance, to: dir.appendingPathComponent("0-welcome-\(suffix).png"))
+    }
     render(AudienceView().frame(width: 960, height: 540), appearance: .darkAqua, to: dir.appendingPathComponent("8-audience-screen.png"))
     render(CurtainView().frame(width: 960, height: 540), appearance: .darkAqua, to: dir.appendingPathComponent("9-curtain.png"))
 }

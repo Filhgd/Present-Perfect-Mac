@@ -26,7 +26,7 @@ step "screenshots"
 "$BIN" --render-ui "$OUT/screenshots/nl" -AppleLanguages "(nl)" || bad "render Dutch"
 for lang in en nl; do
   n=$(ls "$OUT/screenshots/$lang"/*.png 2>/dev/null | wc -l | tr -d ' ')
-  [ "$n" -ge 16 ] && echo "OK   $n screenshots ($lang)" || bad "only $n screenshots ($lang)"
+  [ "$n" -ge 18 ] && echo "OK   $n screenshots ($lang)" || bad "only $n screenshots ($lang)"
 done
 
 echo

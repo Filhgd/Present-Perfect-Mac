@@ -35,6 +35,7 @@ final class Controller: ObservableObject {
     var onHidePanel: () -> Void = {}
     var onShowNote: (Note, (() -> Void)?) -> Void = { _, _ in }
     var onOverlays: () -> Void = {}
+    var onShowWelcome: () -> Void = {}
 
     private(set) var externals: [DisplayInfo] = []
     private(set) var panelVisible = false
@@ -52,7 +53,7 @@ final class Controller: ObservableObject {
         self.store = store
     }
 
-    func start() {
+    func start(checkScreensNow: Bool = true) {
         guard !started else { return }
         started = true
         reloadOutputs()
@@ -61,7 +62,9 @@ final class Controller: ObservableObject {
                                                object: nil, queue: .main) { [weak self] _ in self?.screensChangedSoon() }
         openAtLogin = SMAppService.mainApp.status == .enabled
         // Screens that are already connected at launch are handled like new connections.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.screensChanged() }
+        if checkScreensNow {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.screensChanged() }
+        }
     }
 
     // MARK: Screens
@@ -372,6 +375,11 @@ final class Controller: ObservableObject {
             NSLog("Present Perfect: open at login: \(error)")
         }
         openAtLogin = SMAppService.mainApp.status == .enabled
+    }
+
+    func showWelcome() {
+        hidePanel()
+        onShowWelcome()
     }
 
     func copyDiagnostics() {
