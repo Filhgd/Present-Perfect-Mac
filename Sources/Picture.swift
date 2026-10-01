@@ -26,7 +26,7 @@ struct PictureMode {
     let mode: CGDisplayMode
     let width: Int             // looks like
     let height: Int
-    let pixelWidth: Int        // what the cable carries
+    let pixelWidth: Int        // drawn at this size; twice the size for HiDPI
     let pixelHeight: Int
     let refresh: Double        // 0 when the screen doesn't say
     let flags: UInt32
@@ -122,15 +122,17 @@ enum PicturePlan {
             ?? modes.max(by: byArea)
     }
 
-    /// Larger text: a mode that looks like a smaller screen, so everything is bigger.
-    /// About 1920 wide on a 4K screen, about 1280 wide on a smaller one. Same shape as the screen.
+    /// Larger text: a mode that looks like a smaller screen, so everything is clearly bigger.
+    /// About 1920 wide on a 4K screen, about 1280 wide on a smaller one, and at least a quarter
+    /// narrower than now. Same shape as the screen. HiDPI modes first: they stay sharp.
     static func larger(_ modes: [PictureMode], from current: PictureMode) -> PictureMode? {
         guard let native = native(modes) else { return nil }
-        let target = native.pixelWidth >= 2560 ? 1920 : 1280
+        let target = min(native.pixelWidth >= 2560 ? 1920 : 1280, current.width * 3 / 4)
         let candidates = modes.filter {
             $0.width < current.width && $0.width >= 1024 && !$0.isStretched && abs($0.aspect - native.aspect) < 0.03
         }
-        return candidates.min { a, b in
+        let hidpi = candidates.filter(\.isHiDPI)
+        return (hidpi.isEmpty ? candidates : hidpi).min { a, b in
             let da = abs(a.width - target), db = abs(b.width - target)
             if da != db { return da < db }
             // Drawn at the screen's own resolution is sharper.

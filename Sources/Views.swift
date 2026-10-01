@@ -602,10 +602,15 @@ struct WelcomeView: View {
                 .font(.system(size: 12.5))
             Divider()
             HStack(spacing: 6) {
-                Text(L("Present Perfect is free.")).font(.system(size: 12)).foregroundStyle(.secondary)
-                Button(L("Buy me a coffee")) { NSWorkspace.shared.open(supportURL) }
-                    .buttonStyle(.link)
-                    .font(.system(size: 12))
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(L("Present Perfect is free.")).font(.system(size: 12)).foregroundStyle(.secondary)
+                        Button(L("Buy me a coffee")) { NSWorkspace.shared.open(supportURL) }
+                            .buttonStyle(.link)
+                            .font(.system(size: 12))
+                    }
+                    Text(Build.copyright).font(.system(size: 11)).foregroundStyle(.secondary)
+                }
                 Spacer()
                 Button(L("Get Started")) { onFinish(openAtLogin) }
                     .buttonStyle(ProminentStyle())
@@ -731,7 +736,7 @@ struct SettingsView: View {
 
             Divider().padding(.top, 4)
             HStack(spacing: 6) {
-                Text(L("Version %@", Build.versionString)).font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(L("Version %@", Build.versionString) + " · " + Build.copyright).font(.system(size: 11)).foregroundStyle(.secondary)
                 Spacer()
                 Text(L("Present Perfect is free.")).font(.system(size: 11)).foregroundStyle(.secondary)
                 Button(L("Buy me a coffee")) { NSWorkspace.shared.open(supportURL) }

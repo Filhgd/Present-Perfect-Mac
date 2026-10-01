@@ -68,8 +68,10 @@ enum Diagnostics {
         out.append("")
         out.append("RELATED APPS RUNNING")
         let apps = NSWorkspace.shared.runningApplications.compactMap { app -> String? in
+            // Whole words in the name: "webextension" is not Webex.
+            let words = Set((app.localizedName ?? "").lowercased().split { !$0.isLetter }.map(String.init))
             guard let id = app.bundleIdentifier?.lowercased(),
-                  relatedApps.contains(where: { id.contains($0) || (app.localizedName ?? "").lowercased().contains($0) }) else { return nil }
+                  relatedApps.contains(where: { id.contains($0) || words.contains($0) }) else { return nil }
             return "- \(app.localizedName ?? "?") (\(app.bundleIdentifier ?? "?"))"
         }
         out.append(contentsOf: apps.isEmpty ? ["- none"] : apps)

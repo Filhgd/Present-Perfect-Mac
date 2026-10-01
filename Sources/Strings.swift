@@ -13,6 +13,7 @@ enum Build {
     static var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev" }
     static var number: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0" }
     static var versionString: String { "\(version) (\(number))" }
+    static let copyright = "© 2026 Filip Haegdorens"
 }
 
 /// Screenshots made on the build server cannot show the blurred background; they use a plain one.
