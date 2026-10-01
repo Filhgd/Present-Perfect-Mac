@@ -14,12 +14,12 @@ When you plug in a screen your Mac doesn't know yet, a panel appears in the midd
 In the same panel you choose where the sound plays: the projector or TV, your Mac, or your headphones.
 A **Test** button plays a short sound, so you know it works before the room hears your video.
 
-If the picture isn't right, choose a **Resolution**:
+If the picture isn't right in Present or Mirror, choose a **Resolution**:
 
 - **Automatic**: what macOS chooses. This is the default.
 - **Larger text**: for a large screen where everything looks tiny.
 - **Safe**: a standard resolution for a projector that flickers, stays black or shows no signal.
-- **Other…**: every resolution the screen offers.
+- **Other…**: pick one yourself from the resolutions the screen offers.
 
 After a change, Present Perfect asks whether to keep it. Without an answer, the previous resolution comes back after 15 seconds.
 
@@ -49,35 +49,41 @@ Requires macOS 14 (Sonoma) or later, on Apple silicon or Intel.
 | Fix a picture that is too small, flickers or stays black | In Present or Mirror, choose **Larger text** or **Safe** under **Resolution** in the panel, then click **Keep**. |
 | Black out the projector for a moment   | In Present, press **C** in the panel (or click **Curtain**).      |
 | See which screen the audience sees     | While the panel is open in Present, the other screen says so.     |
-| Change or forget a remembered screen   | **Settings…** in the menu bar icon's menu or under **⋯** in the panel lists every remembered screen. |
+| Change or forget a remembered screen   | **Settings…** in the menu bar icon's menu or under **⋯** in the panel lists every remembered screen, with its sound and resolution. |
 
 When you unplug, the sound moves off the screen's speakers and a short note tells you where it plays now.
 While a projector or TV is connected for presenting, your Mac doesn't fall asleep.
 
 ## Good to know
 
-- **No permissions needed.** Present Perfect uses standard macOS features to arrange screens and
-  choose the sound output. It needs no access to your files, camera, microphone or screen.
+- **No permissions needed.** Present Perfect uses standard macOS features to arrange screens, set their
+  resolution and choose the sound output. It needs no access to your files, camera, microphone or screen.
 - **Updates.** Once a day Present Perfect checks this page for a new version and installs it by itself,
-  but never while you're presenting. It only reads the public release page; nothing about you is sent.
+  but never while you're presenting. It only reads the public release information on GitHub. Nothing about you
+  is sent; GitHub sees an ordinary web request with the app's version number.
   Before installing, it checks that the new version is signed by the same developer and notarized by Apple.
   Use **Check for Updates…** in the menu to check now, or turn off **Update Automatically** there.
 - **Welcome.** The first time you open it, a short welcome explains the basics and asks whether
   Present Perfect may open at login (recommended, so it's ready when you plug in). You can change this
   later in the **⋯** menu or the menu bar icon's menu, where **How It Works…** shows the welcome again.
 - **Resolution.** Present Perfect only uses the resolutions that the screen, cable and adapter report to macOS.
-  Some adapters (VGA in particular) can't pass on the projector's details. macOS then offers a general list, and
-  **Safe** picks 1024 × 768 when it's available.
+  Some adapters (VGA in particular) don't pass on the projector's details. When macOS gets no details,
+  **Safe** picks 1024 × 768 if it's available.
+- **Sound outputs.** Every sound output macOS lists appears in the menu bar icon's menu. Speakers and headphones
+  come first, software outputs such as BlackHole or Microsoft Teams Audio last. A Bluetooth speaker appears once
+  macOS has connected it.
 - **Volume.** Many projectors and TVs don't let your Mac change their volume. Use the screen's own remote.
 - **ClickShare.** If the ClickShare app adds a sound output to your Mac, it appears in the panel's sound choices.
 - **Teams and Zoom.** These apps have their own setting to share your computer's sound when you share
-  your screen ("Include sound" in Teams, "Share sound" in Zoom). Turn it on there when you play a video.
+  your screen ("Include computer sound" in Teams, "Share sound" in Zoom). Turn it on there when you play a video.
 - **Languages.** English, Dutch and French. Present Perfect follows your Mac's language, or choose one in **Settings…**.
 
 ## Something not working?
 
 Open the menu bar icon's menu (or **⋯** in the panel) and choose **Copy Diagnostics**. This copies a
 short report of the screens, their resolutions and the sound devices your Mac sees. Paste it in an issue on this page.
+The report also lists connected USB devices, related apps that are running and the names of your remembered screens,
+so read it before you post it.
 
 ## Uninstall
 
