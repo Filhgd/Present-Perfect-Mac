@@ -65,14 +65,14 @@ jobs:
 
       - name: Upload app
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Present-Perfect-macOS
           path: Present-Perfect-macOS.zip
 
       - name: Upload screenshots and diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: screenshots
           path: |
