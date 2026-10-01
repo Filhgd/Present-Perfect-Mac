@@ -670,6 +670,6 @@ struct SettingsView: View {
         if r.choice == .desk { return L("Sound: left to macOS") }
         guard let uid = r.soundUID else { return L("Sound: chosen automatically") }
         if let output = c.outputs.first(where: { $0.uid == uid }) { return L("Sound: %@", c.label(for: output)) }
-        return L("Sound: a device that is not connected now")
+        return L("Sound: device not connected")
     }
 }

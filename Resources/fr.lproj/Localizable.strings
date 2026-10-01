@@ -78,7 +78,7 @@
 "Sound plays on %@" = "Le son passe par %@";
 "Sound stays on %@" = "Le son reste sur %@";
 "Sound: %@" = "Son : %@";
-"Sound: a device that is not connected now" = "Son : un appareil non connecté pour le moment";
+"Sound: device not connected" = "Son : appareil non connecté";
 "Sound: chosen automatically" = "Son : choisi automatiquement";
 "Sound: left to macOS" = "Son : laissé à macOS";
 "Suggested" = "Suggéré";

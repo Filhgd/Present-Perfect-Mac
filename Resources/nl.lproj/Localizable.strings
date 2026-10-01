@@ -78,7 +78,7 @@
 "Sound plays on %@" = "Geluid speelt via %@";
 "Sound stays on %@" = "Geluid blijft via %@";
 "Sound: %@" = "Geluid: %@";
-"Sound: a device that is not connected now" = "Geluid: een apparaat dat nu niet verbonden is";
+"Sound: device not connected" = "Geluid: apparaat niet verbonden";
 "Sound: chosen automatically" = "Geluid: automatisch gekozen";
 "Sound: left to macOS" = "Geluid: overgelaten aan macOS";
 "Suggested" = "Aanbevolen";
