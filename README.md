@@ -5,7 +5,7 @@ No searching through System Settings for mirroring, and no hunting for the sound
 
 When you plug in a screen your Mac doesn't know yet, a panel appears in the middle of your screen:
 
-<img src="assets/screenshot.png" alt="The Present Perfect panel: Present, Mirror or Desk, and where the sound plays" width="518">
+<img src="assets/screenshot.png" alt="The Present Perfect panel: Present, Mirror or Desk, the resolution, and where the sound plays" width="518">
 
 - **Present** (1): the projector shows your slides, your Mac keeps the presenter notes.
 - **Mirror** (2): the same picture on both screens.
@@ -65,7 +65,7 @@ While a projector or TV is connected for presenting, your Mac doesn't fall aslee
   Use **Check for Updates…** in the menu to check now, or turn off **Update Automatically** there.
 - **Welcome.** The first time you open it, a short welcome explains the basics and asks whether
   Present Perfect may open at login (recommended, so it's ready when you plug in). You can change this
-  later in the **⋯** menu or the menu bar icon's menu, where **How It Works…** shows the welcome again.
+  later in **Settings…**, the **⋯** menu or the menu bar icon's menu, where **How It Works…** shows the welcome again.
 - **Resolution.** Present Perfect only uses the resolutions that the screen, cable and adapter report to macOS.
   Some adapters (VGA in particular) don't pass on the projector's details. When macOS gets no details,
   **Safe** picks 1024 × 768 if it's available.
@@ -88,7 +88,7 @@ so read it before you post it.
 ## Uninstall
 
 Quit Present Perfect from its menu, then drag it from Applications to the Trash.
-If it still shows up in **System Settings > General > Login Items**, remove it there.
+If it still shows up under **Login Items** in **System Settings > General**, remove it there.
 
 ## Building from source
 
@@ -100,4 +100,4 @@ Present Perfect is free. If it saves you time, you can [buy me a coffee](https:/
 
 ## License
 
-[MIT](LICENSE) © Filip Haegdorens
+[MIT](LICENSE) © 2026 Filip Haegdorens
