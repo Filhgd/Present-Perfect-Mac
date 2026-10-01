@@ -23,6 +23,7 @@
 "Copy Diagnostics" = "Kopieer diagnosegegevens";
 "Could not check for updates" = "Kan niet zoeken naar updates";
 "Curtain" = "Zwart scherm";
+"Curtain text" = "Tekst op zwart scherm";
 "Desk" = "Bureau";
 "Diagnostics copied" = "Diagnosegegevens gekopieerd";
 "Done" = "Gereed";
@@ -91,6 +92,7 @@
 "Settings" = "Instellingen";
 "Settings…" = "Instellingen…";
 "Show Panel" = "Toon paneel";
+"Shown on the projector while the curtain is on. Leave empty for the standard text." = "Staat op de beamer zolang het scherm zwart is. Laat leeg voor de standaardtekst.";
 "Sound" = "Geluid";
 "Sound Output" = "Geluidsuitvoer";
 "Sound and resolution: left to macOS" = "Geluid en resolutie: overgelaten aan macOS";

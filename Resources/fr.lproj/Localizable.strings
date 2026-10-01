@@ -23,6 +23,7 @@
 "Copy Diagnostics" = "Copier les diagnostics";
 "Could not check for updates" = "Impossible de rechercher les mises à jour";
 "Curtain" = "Écran noir";
+"Curtain text" = "Texte de l’écran noir";
 "Desk" = "Bureau";
 "Diagnostics copied" = "Diagnostics copiés";
 "Done" = "Terminé";
@@ -91,6 +92,7 @@
 "Settings" = "Réglages";
 "Settings…" = "Réglages…";
 "Show Panel" = "Afficher le panneau";
+"Shown on the projector while the curtain is on. Leave empty for the standard text." = "Affiché sur le projecteur pendant l’écran noir. Laissez vide pour le texte standard.";
 "Sound" = "Son";
 "Sound Output" = "Sortie audio";
 "Sound and resolution: left to macOS" = "Son et résolution : laissés à macOS";

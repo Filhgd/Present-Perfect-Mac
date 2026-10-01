@@ -519,12 +519,23 @@ struct NoteView: View {
 // MARK: - Overlays on the other screen
 
 struct CurtainView: View {
+    /// The user's own text from Settings. Empty: the standard text.
+    static let textKey = "curtainText"
+    @AppStorage(CurtainView.textKey) private var custom = ""
+
+    private var text: String {
+        let own = custom.trimmingCharacters(in: .whitespacesAndNewlines)
+        return own.isEmpty ? L("We'll start in a moment") : own
+    }
+
     var body: some View {
         ZStack {
             Color.black
-            Text(L("We'll start in a moment"))
+            Text(text)
                 .font(.system(size: 22))
                 .foregroundStyle(Color.white.opacity(0.35))
+                .multilineTextAlignment(.center)
+                .padding(40)
         }
     }
 }
@@ -660,6 +671,7 @@ struct SettingsView: View {
     let onRestart: () -> Void
     @State private var language: String
     @State private var languageChanged = false
+    @AppStorage(CurtainView.textKey) private var curtainText = ""
 
     init(c: Controller, store: Store, updateAutomatically: Binding<Bool>,
          onCheckForUpdates: @escaping () -> Void, onRestart: @escaping () -> Void) {
@@ -719,6 +731,20 @@ struct SettingsView: View {
                         Spacer()
                         Button(L("Restart Now"), action: onRestart)
                     }
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack {
+                        Text(L("Curtain text")).font(.system(size: 12.5))
+                        Spacer()
+                        TextField(L("We'll start in a moment"), text: $curtainText)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12.5))
+                            .frame(width: 280)
+                    }
+                    Text(L("Shown on the projector while the curtain is on. Leave empty for the standard text."))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Toggle(L("Open at Login"), isOn: Binding(get: { c.openAtLogin }, set: { c.setOpenAtLogin($0) }))
                     .toggleStyle(.checkbox)

@@ -47,7 +47,7 @@ Requires macOS 14 (Sonoma) or later, on Apple silicon or Intel.
 | Remember the choice for this screen    | Leave **Remember as** on, give it a name and press **Return**.    |
 | Open the panel at any moment           | Press **Control-Option-P** (⌃⌥P), or click the menu bar icon.     |
 | Fix a picture that is too small, flickers or stays black | In Present or Mirror, choose **Larger text** or **Safe** under **Resolution** in the panel, then click **Keep**. |
-| Black out the projector for a moment   | In Present, press **C** in the panel (or click **Curtain**).      |
+| Black out the projector for a moment   | In Present, press **C** in the panel (or click **Curtain**). The text on the black screen can be changed in **Settings…**. |
 | See which screen the audience sees     | While the panel is open in Present, the other screen says so.     |
 | Change or forget a remembered screen   | **Settings…** in the menu bar icon's menu or under **⋯** in the panel lists every remembered screen, with its sound and resolution. |
 
