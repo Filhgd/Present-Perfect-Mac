@@ -1,0 +1,26 @@
+Present Perfect 0.4.1 (42)
+macOS Version 14.8.9 (Build 23J631), VirtualMac2,1
+Date: 2026-10-02T08:32:00Z
+
+SCREENS
+- id 1: Apple Virtual, external, key 0-0-305419896, 1920x1080 at 0,0, main
+
+PICTURE MODES
+- id 1: 1 usable of 1 modes, no screen information (generic)
+  current: 1920x1080 (pixels 1920x1080) 60.00 Hz, flags 0x02000007 native default
+  native: 1920x1080 (pixels 1920x1080) 60.00 Hz, flags 0x02000007 native default
+  larger text: none
+  safe: 1920x1080 (pixels 1920x1080) 60.00 Hz, flags 0x02000007 native default
+  - 1920x1080 (pixels 1920x1080) 60.00 Hz, flags 0x02000007 native default
+
+SOUND DEVICES
+- Apple Virtual Sound Device [bltn] input, DEFAULT INPUT, uid AVIODevice
+- Apple Virtual Sound Device [bltn] output, DEFAULT OUTPUT, uid AVIODevice 2
+- Null Audio Device [virt] output, input, uid NullAudioDevice_UID
+
+USB DEVICES
+- Apple Inc. Virtual USB Digitizer (vendor 0x5ac, product 0x8106)
+- Apple Inc. Virtual USB Keyboard (vendor 0x5ac, product 0x8105)
+
+RELATED APPS RUNNING
+- AirPlayUIAgent (com.apple.AirPlayUIAgent)
