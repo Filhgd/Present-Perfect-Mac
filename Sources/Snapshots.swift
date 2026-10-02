@@ -98,8 +98,9 @@ func renderSnapshots(to dir: URL) {
                                 pictureMode: SavedMode(width: 1280, height: 720, pixelWidth: 1280, pixelHeight: 720, refresh: 60))
     let settingsController = controller { $0.connectedKeys = ["2-2-2"] }
     for (suffix, appearance) in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
-        render(SettingsView(c: settingsController, store: store, updateAutomatically: .constant(true),
-                            onCheckForUpdates: {}, onRestart: {}),
+        let updates = UpdateManager()
+        updates.status = L("Version %@ is the newest version.", Build.version)
+        render(SettingsView(c: settingsController, store: store, updates: updates, onRestart: {}),
                appearance: appearance, to: dir.appendingPathComponent("10-settings-\(suffix).png"))
     }
     render(AudienceView().frame(width: 960, height: 540), appearance: .darkAqua, to: dir.appendingPathComponent("8-audience-screen.png"))

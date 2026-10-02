@@ -666,19 +666,16 @@ enum Languages {
 struct SettingsView: View {
     @ObservedObject var c: Controller
     @ObservedObject var store: Store
-    @Binding var updateAutomatically: Bool
-    let onCheckForUpdates: () -> Void
+    @ObservedObject var updates: UpdateManager
     let onRestart: () -> Void
     @State private var language: String
     @State private var languageChanged = false
     @AppStorage(CurtainView.textKey) private var curtainText = ""
 
-    init(c: Controller, store: Store, updateAutomatically: Binding<Bool>,
-         onCheckForUpdates: @escaping () -> Void, onRestart: @escaping () -> Void) {
+    init(c: Controller, store: Store, updates: UpdateManager, onRestart: @escaping () -> Void) {
         self.c = c
         self.store = store
-        _updateAutomatically = updateAutomatically
-        self.onCheckForUpdates = onCheckForUpdates
+        self.updates = updates
         self.onRestart = onRestart
         _language = State(initialValue: Languages.current)
     }
@@ -750,11 +747,18 @@ struct SettingsView: View {
                     .toggleStyle(.checkbox)
                     .font(.system(size: 12.5))
                 HStack {
-                    Toggle(L("Update Automatically"), isOn: $updateAutomatically)
+                    Toggle(L("Update Automatically"), isOn: Binding(get: { updates.automatic }, set: { updates.automatic = $0 }))
                         .toggleStyle(.checkbox)
                         .font(.system(size: 12.5))
                     Spacer()
-                    Button(L("Check for Updates…"), action: onCheckForUpdates)
+                    Button(L("Check for Updates…")) { updates.check(manual: true, fromSettings: true) }
+                }
+                if let status = updates.status {
+                    Text(status)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(12)

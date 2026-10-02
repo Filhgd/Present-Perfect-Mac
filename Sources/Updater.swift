@@ -221,22 +221,31 @@ enum Updater {
 }
 
 /// Checks once a day and installs updates by itself, but never while you are presenting.
-final class UpdateManager {
+final class UpdateManager: ObservableObject {
     var onNote: (Note, (() -> Void)?) -> Void = { _, _ in }
     var isPresenting: () -> Bool = { false }
+    /// The outcome of a check started in Settings, shown under its button.
+    @Published var status: String?
 
     private let defaults = UserDefaults.standard
     private var timer: Timer?
     private var working = false
+    private var reportInSettings = false
     private var waiting: Release?   // found while presenting: installed as soon as possible
+
+    init() {
+        defaults.register(defaults: ["autoUpdate": true])
+    }
 
     var automatic: Bool {
         get { defaults.bool(forKey: "autoUpdate") }
-        set { defaults.set(newValue, forKey: "autoUpdate") }
+        set {
+            objectWillChange.send()
+            defaults.set(newValue, forKey: "autoUpdate")
+        }
     }
 
     func start() {
-        defaults.register(defaults: ["autoUpdate": true])
         announceIfJustUpdated()
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in self?.tick() }
         timer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in self?.tick() }
@@ -253,35 +262,47 @@ final class UpdateManager {
         if Date().timeIntervalSince(last) > 23 * 3600 { check(manual: false) }
     }
 
-    /// "Check for Updates…" (manual) or the daily check.
-    func check(manual: Bool) {
+    /// "Check for Updates…" in the menu (manual), in Settings (the result is shown there), or the daily check.
+    func check(manual: Bool, fromSettings: Bool = false) {
+        if fromSettings {
+            reportInSettings = true
+            status = L("Checking for updates…")
+        }
         guard !working else { return }
         working = true
         Updater.fetchLatest { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
+                let report = self.reportInSettings
+                self.reportInSettings = false
+                let isManual = manual || report
                 self.defaults.set(Date(), forKey: "lastUpdateCheck")
                 switch result {
                 case .failure:
                     self.working = false
-                    if manual {
+                    if report {
+                        self.status = L("Could not check for updates") + ". " + L("Check your internet connection and try again.")
+                    } else if isManual {
                         self.onNote(Note(title: L("Could not check for updates"), lines: [L("Check your internet connection and try again.")]), nil)
                     }
                 case .success(let release):
                     guard Updater.isNewer(release.version, than: Build.version) else {
                         self.working = false
-                        if manual {
+                        if report {
+                            self.status = L("Version %@ is the newest version.", Build.version)
+                        } else if isManual {
                             self.onNote(Note(title: L("Present Perfect is up to date"), lines: [L("Version %@ is the newest version.", Build.version)]), nil)
                         }
                         return
                     }
-                    if !manual && self.isPresenting() {
+                    if !isManual && self.isPresenting() {
                         self.waiting = release
                         self.working = false
                         return
                     }
                     self.working = false
-                    self.install(release, manual: manual)
+                    if report { self.status = L("Updating to version %@…", release.version) }
+                    self.install(release, manual: isManual && !report)
                 }
             }
         }

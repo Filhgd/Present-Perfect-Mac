@@ -239,6 +239,9 @@ final class Controller: ObservableObject {
     /// or a screen other than your desk is connected.
     var isPresenting: Bool { panelVisible || curtain || (!externals.isEmpty && !deskSession) }
 
+    /// A projector or TV is connected for presenting (not a desk monitor).
+    var hasAudience: Bool { !externals.isEmpty && !deskSession }
+
     /// While the panel is open in Present, the other screen says "Audience screen".
     var showsAudienceLabel: Bool { panelVisible && choice == .present && !curtain }
 

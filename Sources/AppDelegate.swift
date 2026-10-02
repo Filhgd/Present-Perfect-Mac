@@ -54,6 +54,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         }
     }
 
+    /// While a projector or TV is connected for presenting, the panel and notes stay on the Mac's own
+    /// screen, away from the audience. Otherwise (at a desk) they appear on the screen with the pointer.
+    private func workScreen() -> NSScreen? {
+        if controller.hasAudience { return Displays.homeScreen() }
+        let pointer = NSEvent.mouseLocation
+        return NSScreen.screens.first { NSMouseInRect(pointer, $0.frame, false) } ?? Displays.homeScreen()
+    }
+
     // MARK: Welcome
 
     private func showWelcome() {
@@ -73,7 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         w.title = appName
         w.isReleasedWhenClosed = false
         w.delegate = self
-        if let screen = Displays.homeScreen() {
+        if let screen = workScreen() {
             let f = screen.visibleFrame
             w.setFrameOrigin(NSPoint(x: f.midX - w.frame.width / 2, y: f.midY - w.frame.height / 2 + f.height * 0.05))
         } else {
@@ -113,13 +121,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             return
         }
         controller.reloadOutputs()
-        let view = SettingsView(
-            c: controller,
-            store: controller.store,
-            updateAutomatically: Binding(get: { [weak self] in self?.updates.automatic ?? true },
-                                         set: { [weak self] in self?.updates.automatic = $0 }),
-            onCheckForUpdates: { [weak self] in self?.updates.check(manual: true) },
-            onRestart: { Updater.relaunch(Bundle.main.bundleURL) })
+        updates.status = nil
+        let view = SettingsView(c: controller, store: controller.store, updates: updates,
+                                onRestart: { Updater.relaunch(Bundle.main.bundleURL) })
         let host = NSHostingController(rootView: view)
         host.sizingOptions = [.preferredContentSize]
         let w = NSWindow(contentViewController: host)
@@ -164,7 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let p = panel ?? makePanel()
         panel = p
         p.layoutIfNeeded()
-        if let screen = Displays.homeScreen() {
+        if let screen = workScreen() {
             let f = screen.visibleFrame
             let size = p.frame.size
             p.setFrameOrigin(NSPoint(x: (f.midX - size.width / 2).rounded(), y: (f.midY - size.height / 2 + f.height * 0.08).rounded()))
@@ -252,7 +256,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         notePanel = p
         p.contentView = host
         let size = host.fittingSize
-        if let screen = Displays.homeScreen() {
+        if let screen = workScreen() {
             let f = screen.visibleFrame
             p.setFrame(NSRect(x: f.maxX - size.width - 16, y: f.maxY - size.height - 12, width: size.width, height: size.height),
                        display: true)
@@ -287,8 +291,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     private func updateOverlays() {
         let home = Displays.homeScreen().flatMap(Displays.displayID(of:))
+        // Never over the panel (at a desk it can be on the external screen).
+        let panelScreen = controller.panelVisible ? panel?.screen.flatMap(Displays.displayID(of:)) : nil
         var wanted: [CGDirectDisplayID: Bool] = [:]   // display -> curtain (true) or audience label (false)
-        for d in controller.externals where !d.isMirroring && d.id != home {
+        for d in controller.externals where !d.isMirroring && d.id != home && d.id != panelScreen {
             if controller.curtain {
                 wanted[d.id] = true
             } else if controller.showsAudienceLabel {
